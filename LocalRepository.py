@@ -12,7 +12,7 @@ class LocalRepository:
 	def read(self):
 		if not os.path.exists(self.localRepoFileName):
 			print("Création de la base de données locale...")
-			tab = {"mods":{}}
+			tab = {}
 			self.updateDB(tab)
 
 		with open(self.localRepoFileName, "r") as fichier:

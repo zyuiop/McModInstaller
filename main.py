@@ -1,7 +1,7 @@
 # CONFIGURATION !!!
 appdata = ""
 # Décommentez la ligne ci dessous pour le programme WINDOWS :
-# appdata = "AppData/Roaming"
+# appdata = "/AppData/Roaming"
 
 import functions
 import json
