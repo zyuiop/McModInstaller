@@ -168,7 +168,7 @@ while Exec:
 					try:
 						do = int(do)
 						assert do >= 0 and do < 10
-						assert do in pge
+						assert do < len(pge)
 					except:
 						print("Nombre incorrect")
 					else:
