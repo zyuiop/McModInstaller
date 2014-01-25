@@ -137,7 +137,7 @@ class Args:
 			if "--noconfirm" in self.original_args:
 				noconfirm = True
 			else:
-				print("#====[Affichage client : "+sel_cl["name"]+"]====#")
+				print("#====[Affichage client : "+client["name"]+"]====#")
 				print("VERSION : "+package["version"])
 				print("DESCRIP TION : "+package["description"])
 				print("URL du .PKG : "+client["pkgurl"])
