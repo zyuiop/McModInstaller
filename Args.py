@@ -6,6 +6,7 @@ import shutil
 import json
 import sys,getopt
 from Remote import *
+from UserInteract import *
 
 
 class Args:
@@ -15,6 +16,7 @@ class Args:
 		self.mcpath = mcpath
 		self.args = args
 		self.original_args = original_args
+		self.UI = UserInteract()
 
 	def init(self):
 		repo = self.settings.getNode("repository")
@@ -27,6 +29,8 @@ class Args:
 		if not self.liste:
 			print("Impossible d'atteindre le dépôt.")
 			exit()
+
+		self.UI.setRemote(self.repo)
 
 	def execute(self):
 		# Analyse des paramètres
@@ -43,6 +47,7 @@ class Args:
 				print(" -p or --package=<packagename> : Install a mod using packagename (for example : 1.6.2__ComputerCraft)")
 				print(" -c or --client=<clientname> : Install a client (for example : 1.5.2_FML)")
 				print(" -u or --update : Update all mods")
+				print(" -s or --search : search a mod")
 				print(" --noconfirm : don't confirm before installing mod")
 				return True
 			elif opt in ("-m", "--mod"):
@@ -72,56 +77,23 @@ class Args:
 					self.repo.updateMods(True)
 				else:
 					self.repo.updateMods()
+			elif opt in ("-s", "--search"):
+				self.init()
+				self.repo.search(arg)
 	
 
 	def searchMod(self, mcversion, modname):
 		self.init()
-		mods = self.liste.get("mods")
-		if mods == None:
-			print("La base de données est corrompue.")
-			exit()
-
-		modv = mods.get(mcversion)
-		if modv == None:
-			print("Erreur : Le mod est introuvable (version incorrecte)")
-			exit()
-
-		mod = modv["mods"].get(modname)
-
+		mod = self.repo.getPackage(modname, mcversion)
 		if mod == None:
-			print("Erreur : le mod est introuvable")
-			exit()
-
-		package = self.repo.downloadPkgInfo(mod["pkgurl"])
-		if package == False:
 			print("Paquet non trouvé.")
 			exit()
-		else:
-			noconfirm = False
-			packageName = self.localDB.packageName(package["package_name"], package["mc_version"])
-			package["pkgurl"] = mod["pkgurl"]
-			if "--noconfirm" in self.original_args:
-				noconfirm = True
-			else:
-				print("#====[Affichage du mod : "+mod["name"]+"]====#")
-				print("VERSION : "+package["version"])
-				print("NOM PAQUET : "+packageName)
-				print("DESCRIPTION : "+package["description"])
-				print("URL du .PKG : "+mod["pkgurl"])
-				print("POUR MINECRAFT "+package["requires"])
-				print("SITE WEB : "+package["website"])
-				print("DEPENDANCES : ")
-				for dep in package["dependencies"]:
-					print(" -> "+dep["name"])
 
-				print("== Voulez vous installer ce mod ? ==")
-				char = input("[O/n] ")
-				if char.lower() == "n":
-					print("Le mod ne sera pas installé.")
-					exit()
-			print("Installation du mod "+packageName)
-			self.repo.installMod(package, noconfirm)
-			exit()
+		noconfirm = False
+		if "--noconfirm" in self.original_args:
+			noconfirm = True
+		self.UI.packageInstallPrompt(mod["pkgurl"], noconfirm)
+		exit()
 
 
 	def searchClient(self, clientname):

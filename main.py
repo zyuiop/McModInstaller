@@ -15,13 +15,14 @@ home = expanduser("~")+mcpath
 settingsManager = Settings(home)
 localDB = LocalRepository(home)
 UI = UserInteract.UserInteract()
+UI.setLocalDB(localDB)
 
 
 # ANALYSE DES ARGUMENTS
 args = sys.argv[1:]
 if len(args) > 0:
 	try:
-		opts, args = getopt.getopt(sys.argv[1:],"uhm:v:p:c:",["update","help","mod=","version=","package=","client=","noconfirm"])
+		opts, args = getopt.getopt(sys.argv[1:],"uhm:v:p:c:s:",["update","help","mod=","version=","package=","client=","search=","noconfirm"])
 	except getopt.GetoptError:
 		print("Unknown argument. Try --help for help")
 	else:
@@ -75,6 +76,8 @@ while True:
 		break
 
 # 6. Validation de la connexion
+UI.setRemote(depot)
+
 if Exec:
 	print("Vous êtes bien connecté au dépôt \""+repo["repo"]+"\"")
 
@@ -82,7 +85,7 @@ if Exec:
 while Exec:
 	print("")
 	choix = UI.mainMenu()
-	if choix == 5:
+	if choix == 6:
 		# Aide
 		print("Aide du MCMod Installer")
 		print("La première chose à faire est d'installer un client custom. Le client le plus moddé est le client FML (Forge Mod Loader). Allez donc dans 'Clients' puis sélectionnez le client FML de votre version")
@@ -91,7 +94,7 @@ while Exec:
 	elif choix == 0:
 		Exec = False
 
-	elif choix == 6:
+	elif choix == 7:
 		# Modification du dépot
 		repo, repoDirectory = UI.inputDepot()
 		settingsManager.updateNode("repository",repo)
@@ -101,6 +104,25 @@ while Exec:
 	
 	elif choix == 3:
 		depot.updateMods()
+	elif choix == 5:
+		print("> Recherche de mods :")
+		recherche = input("Saisissez votre recherche : ")
+		depot.search(recherche)
+		print("> Nom du paquet à installer : (n pour ne rien installer)")
+		package = input("> ")
+		package = package.split("__")
+		if len(package) < 2:
+			print("Erreur : nom de paquet non supporté")
+		else:
+			ver = package[:1]
+			reste = package[1:]
+			if len(reste) > 1:
+				print("Erreur : nom de paquet non supporté")
+			else:
+				pack = depot.getPackage(reste[0], ver[0])
+				if pack != None:
+					UI.packageInstallPrompt(pack["pkgurl"])
+
 	elif choix == 4:
 		mods_o = localDB.getAllPackages()
 		nbpages = math.ceil(len(mods_o)/10)
@@ -288,31 +310,8 @@ while Exec:
 						print("Nombre incorrect")
 					else:
 						modid = do+(currentPage*10)
-						package = depot.downloadPkgInfo(mods[modid]["pkgurl"])
-						if package == False:
-							print("Impossible de récupérer le paquet...")
-						else:
-							mod = mods[modid]
-							packageName = localDB.packageName(package["package_name"], package["mc_version"])
-							print("#====[Affichage du mod : "+mod["name"]+"]====#")
-							print("VERSION : "+package["version"])
-							print("NOM PAQUET : "+packageName)
-							print("DESCRIPTION : "+package["description"])
-							print("URL du .PKG : "+mod["pkgurl"])
-							print("POUR MINECRAFT "+package["requires"])
-							print("SITE WEB : "+package["website"])
-							print("DEPENDANCES : ")
-							for dep in package["dependencies"]:
-								print(" -> "+dep["name"])
+						UI.packageInstallPrompt(mods[modid]["pkgurl"])
 							
-							print("== Voulez vous installer ce mod ? ==")
-							char = input("[O/n] ")
-							if char == "" or char.lower() == "o":
-								package["pkgurl"] = mod["pkgurl"]
-								print("Le mod va être installé. Patientez s'il vous plait...")
-								depot.installMod(package)
-								print("")
-							else:
-								print("Le mod ne sera pas installé.")
+							
 
 print("Au revoir ! ")

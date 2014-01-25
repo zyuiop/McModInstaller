@@ -44,6 +44,33 @@ class Remote:
 		except:
 			return False
 
+	def getPackage(self, package_name, minecraft_version):
+		mods = self.repContent["mods"]
+		modv = mods.get(minecraft_version)
+		if modv == None:
+			print("Erreur : Le mod est introuvable (version incorrecte)")
+			return None
+
+		mod = modv["mods"].get(package_name)
+		if mod == None:
+			print("Erreur : le mod est introuvable")
+			return None
+
+		return mod
+
+
+	def search(self,key):
+		gotRes = False
+		key = key.lower()
+		print("#====[AFFICHAGE DES RESULTATS]====#")
+		print("# Recherche : "+key)
+		print("Nom du paquet : Nom du Mod (Version minecraft)")
+		for name, version in self.repContent["mods"].items():
+			for pkname, pk in version["mods"].items():
+				if key in pk["name"].lower() or key in pkname.lower():
+					print(name+"__"+pkname+" : "+pk["name"]+" ("+name+")")
+
+
 	def updateMods(self, noconfirm = False):
 		print("> Préparation de la mise à jour de tous les mods...")
 		pkgs = self.localDB.getAllPackages()
