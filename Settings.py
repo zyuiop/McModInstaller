@@ -5,8 +5,10 @@ import json
 
 class Settings:
 
-	def __init__(self, appdata):
-		self.settingsFile = appdata+"/.minecraft/mcmodsinstaller.config"
+	def __init__(self, mcpath):
+		self.settingsFile = mcpath+"/mcmodsinstaller.config"
+		if not os.path.exists(mcpath):
+			mkpath(mcpath)
 		
 	def read(self):
 		if not os.path.exists(self.settingsFile):

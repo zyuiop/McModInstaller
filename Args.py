@@ -9,10 +9,10 @@ from Remote import *
 
 
 class Args:
-	def __init__(self, localDB, settings, home, args, original_args):
+	def __init__(self, localDB, settings, mcpath, args, original_args):
 		self.localDB = localDB
 		self.settings = settings
-		self.home = home
+		self.mcpath = mcpath
 		self.args = args
 		self.original_args = original_args
 
@@ -22,7 +22,7 @@ class Args:
 		if repo == False:
 			print("Aucun dépôt configuré. Le programme va quitter")
 			exit()
-		self.repo = Remote(repo, repoDirectory, self.home+"/.minecraft", self.localDB)
+		self.repo = Remote(repo, repoDirectory, self.mcpath, self.localDB)
 		self.liste = self.repo.updateList()
 		if not self.liste:
 			print("Impossible d'atteindre le dépôt.")
@@ -42,6 +42,7 @@ class Args:
 				print(" -v or --version=<mcversion> : Minecraft version. Needed to install a mod using -m (for example : main.py --version=1.6.2 --mod=ComputerCraft) ")
 				print(" -p or --package=<packagename> : Install a mod using packagename (for example : 1.6.2__ComputerCraft)")
 				print(" -c or --client=<clientname> : Install a client (for example : 1.5.2_FML)")
+				print(" -u or --update : Update all mods")
 				print(" --noconfirm : don't confirm before installing mod")
 				return True
 			elif opt in ("-m", "--mod"):
@@ -65,6 +66,12 @@ class Args:
 					print("Erreur : nom de paquet non supporté")
 					exit()
 				self.searchMod(ver[0],reste[0])
+			elif opt in ("-u", "--update"):
+				self.init()
+				if "--noconfirm" in self.original_args:
+					self.repo.updateMods(True)
+				else:
+					self.repo.updateMods()
 	
 
 	def searchMod(self, mcversion, modname):

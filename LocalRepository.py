@@ -2,12 +2,16 @@ import http.client
 import os
 import shutil
 import json
+from distutils.dir_util import *
 
 class LocalRepository:
 
-	def __init__(self, appdata):
-		self.mcModsDirectory = appdata+"/.minecraft/mods/"
-		self.localRepoFileName = appdata+"/.minecraft/McModsInstaller.localdb"
+	def __init__(self, mcpath):
+
+		self.mcDirectory = mcpath
+		if not os.path.exists(self.mcDirectory):
+			mkpath(self.mcDirectory)
+		self.localRepoFileName = mcpath+"/McModsInstaller.localdb"
 		
 	def read(self):
 		if not os.path.exists(self.localRepoFileName):

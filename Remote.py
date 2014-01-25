@@ -1,7 +1,10 @@
 import http.client
+import urllib.request
+import UserInteract
 import os
 import shutil
 import json
+from distutils.dir_util import *
 
 class Remote:
 	def __init__(self, repo, directory, mcpath, LocalDB):
@@ -16,7 +19,7 @@ class Remote:
 		self.mcpath = mcpath
 		self.localDB = LocalDB
 
-	def downloadFile(self,server,url):
+	def downloadFile(self,server,url,progress=True):
 		conn = http.client.HTTPConnection(server)
 		conn.request("GET", url)
 		rep = conn.getresponse()
@@ -41,6 +44,45 @@ class Remote:
 		except:
 			return False
 
+	def updateMods(self, noconfirm = False):
+		print("> Préparation de la mise à jour de tous les mods...")
+		pkgs = self.localDB.getAllPackages()
+		toupdate = []
+		print("> Vérification des mises à jour disponibles...")
+		
+		# Vérif des updates
+		for reponame, package in pkgs.items():
+			print(">> Vérification des mises à jour de "+package["name"])
+			rep = self.downloadPkgInfo(package["pkgurl"])
+			
+			if rep == False:
+				print(">>> Impossible de vérifier la version du paquet (Erreur réseau)")
+			else:
+				if rep["version"] > package["version"]:
+					rep["pkgurl"] = package["pkgurl"]
+					toupdate.append(rep)
+					print(">>> Mise à jour disponible.")
+				else:
+					print(">>> Non mis à jour")
+			
+		if len(toupdate) == 0:
+			print("")
+			print("AUCUNE MISE A JOUR DISPONIBLE.")
+		else:
+			print("Il y a "+str(len(toupdate))+" mises à jour à installer.")
+			if noconfirm or UserInteract.UserInteract().yesNoQuestion("Voulez vous les installer ?"):
+				print("")
+				print("Début de la mise à jour...")
+
+				for package in toupdate:
+					print("> Mise à jour de "+package["name"])
+					print("")
+					if not self.installMod(package, noconfirm):
+						print("> Erreur de mise à jour.")
+					else:
+						print("> Mise à jour du mod effectuée.")
+					print("")
+
 	def installMod(self,pkg,noconfirm = False, depends_treated = [],):
 		installpath = self.mcpath+"/mods/"+pkg["mcver"]
 
@@ -61,7 +103,7 @@ class Remote:
 
 		# Vérif : Le dossier d'install existe t-il ?
 		if not os.path.exists(installpath):
-			os.mkdir(installpath)
+			mkpath(installpath)
 
 		# On checke les dépendances
 		print(">> Résolution des dépendances...")
@@ -118,7 +160,7 @@ class Remote:
 				
 				# On crée le dossier d'installation
 				if not os.path.exists(path+"versions/"+pkg["profilename"]):
-					os.mkdir(path+"versions/"+pkg["profilename"])
+					mkpath(path+"versions/"+pkg["profilename"])
 				else:
 					print("[/!\\] Le dossier du profil existe")
 
