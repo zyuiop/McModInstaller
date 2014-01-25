@@ -119,13 +119,16 @@ class Remote:
 				# S'il y a un fichier à télécharger
 				if "jarfile" in pkg.keys():
 					print("[1/3] Téléchargement de minecraft.jar...")
-					with open(path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".jar", "wb") as fichier:
-						try:
-							tosave = downloadFile(self.repo,self.directory+"/"+pkg["jarfile"])
-							fichier.write(tosave)
-						except:
-							print("Erreur ! Impossible de télécharger ou d'écrire "+pkg["profilename"]+".jar")
-							return False
+					tosave = self.downloadFile(self.repo,self.directory+"/"+pkg["jarfile"])
+					if not tosave:
+						print("Erreur lors du téléchargement...")
+					else:
+						with open(path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".jar", "wb") as fichier:
+							try:
+								fichier.write(tosave)
+							except:
+								print("Erreur ! Impossible d'écrire "+pkg["profilename"]+".jar")
+								return False
 				else:
 					print("[1/3] Copie du fichier...")
 					shutil.copy(path+"versions/"+pkg["version"]+"/"+pkg["version"]+".jar", path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".jar")
