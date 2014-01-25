@@ -6,6 +6,7 @@ appdata = ""
 import functions
 import json
 import math
+import sys, getopt
 from os.path import expanduser
 home = expanduser("~")+appdata
 import os
@@ -16,8 +17,25 @@ from Settings import *
 settingsManager = Settings(home)
 localDB = LocalRepository(home)
 
+# On a passé des arguments ?
+args = sys.argv[1:]
+if len(args) > 0:
+	try:
+		opts, args = getopt.getopt(sys.argv[1:],"hm:v:p:c:",["help","mod=","version=","package=","client=","noconfirm"])
+	except getopt.GetoptError:
+		print("Unknown argument. Try --help for help")
+	else:
+		from Args import *
+		cl = Args(localDB, settingsManager, home, opts, sys.argv[1:])
+		cl.execute()
+	exit()
+
+
+
+
 print("Minecraft Mods Installer - Version 0.2a")
 Exec = True
+
 
 
 repo = settingsManager.getNode("repository")
@@ -87,7 +105,7 @@ while Exec:
 			print("> Vérification des mises à jour disponibles...")
 			for reponame, package in pkgs.items():
 				print(">> Vérification des mises à jour de "+package["name"])
-				rep = depot.downloadPkgInfo(reponame)
+				rep = depot.downloadPkgInfo(package["pkgurl"])
 				if rep == False:
 					print(">> Impossible de vérifier la version du paquet (Erreur réseau)")
 				else:
@@ -177,6 +195,7 @@ while Exec:
 						print("#====[Affichage du mod : "+mod["name"]+"]====#")
 						print("VERSION : "+mod["version"])
 						print("POUR MINECRAFT "+mod["requires"])
+						print("NOM DU PACKET : "+mod["key"])
 						print("== Voulez vous désinstaller ce mod ? ==")
 						char = input("[O/n] ")
 						if char == "" or char.lower() == "o":
@@ -195,7 +214,14 @@ while Exec:
 		elif choix == 1:
 			print("")
 			print("#====[Clients disponibles sur le dépôt]====#")
-			clients = repo["clients"]
+
+			clients_o = repo["clients"]
+			clients = []
+			#Conversion du DICTIONNAIRE clients_o en LISTE
+			for k,c in clients_o.items():
+				c["key"] = k
+				clients.append(c)
+
 			print("n° : Nom du client")
 			for clid, cl in enumerate(clients):
 				print(str(clid)+" : "+cl["name"])
@@ -207,14 +233,16 @@ while Exec:
 				print("Erreur : ce client n'a pas été trouvé !")
 			else:
 				sel_cl = clients[num]
+				print("> Récupération des infos du paquet...")
 				package = depot.downloadPkgInfo(sel_cl["pkgurl"])
 				if package == False:
 					print("[ERREUR RESEAU] Impossible de récupérer le paquet.")
 				else:
 					print("#====[Affichage client : "+sel_cl["name"]+"]====#")
 					print("VERSION : "+package["version"])
-					print("DESCRIPTION : "+sel_cl["description"])
+					print("DESCRIPTION : "+package["description"])
 					print("URL du .PKG : "+sel_cl["pkgurl"])
+					print("NOM DU PAQUET : "+sel_cl["key"])
 					print("")
 					print(">> Voulez vous installer ce client ?")
 					char = input("[O/n] ")
@@ -227,21 +255,31 @@ while Exec:
 
 		elif choix == 2:
 			print("#====[Choisir une version de Minecraft]====#")
+
 			mcpath = home+"/.minecraft/"
 			versions = repo["mods"]
-			print("n° : Nom de version")
-			for verid, ver in enumerate(versions):
+
+
+			print("ID : Nom de version")
+			for verid, ver in versions.items():
 				print(str(verid)+" : "+ver["version"])
 
-			print(">> Choix ?")
+			print(">> Choix (ID) ?")
 			try:
-				num = int(input("> "))
-				assert num >= 0 and num < len(versions)
+				num = input("> ")
+				assert num in versions.keys()
 			except:
-				print("Erreur : cet id de version n'existe pas !")
+				print("Erreur : cet ID de version n'existe pas !")
 			else:
 				print(">> Récupération de la liste de mods pour la version "+versions[num]["version"]+" <<")
-				mods = versions[num]["mods"]
+				
+				mods_o = versions[num]["mods"]
+				mods = []
+				# Conversion en liste
+				for k,m in mods_o.items():
+					m["key"] = k
+					mods.append(m)
+
 				print(">> "+str(len(mods))+" mods sont disponibles pour cette version <<")
 				nbpages = math.ceil(len(mods)/10)
 				pages = []
@@ -293,15 +331,16 @@ while Exec:
 							print("Nombre incorrect")
 						else:
 							modid = do+(currentPage*10)
-							try:
-								package = depot.downloadPkgInfo(mods[modid]["pkgurl"])
-							except:
+							package = depot.downloadPkgInfo(mods[modid]["pkgurl"])
+							if package == False:
 								print("Impossible de récupérer le paquet...")
 							else:
 								mod = mods[modid]
+								packageName = localDB.packageName(package["package_name"], package["mc_version"])
 								print("#====[Affichage du mod : "+mod["name"]+"]====#")
 								print("VERSION : "+package["version"])
-								print("DESCRIPTION : "+mod["description"])
+								print("NOM PAQUET : "+packageName)
+								print("DESCRIPTION : "+package["description"])
 								print("URL du .PKG : "+mod["pkgurl"])
 								print("POUR MINECRAFT "+package["requires"])
 								print("SITE WEB : "+package["website"])
@@ -315,7 +354,7 @@ while Exec:
 									package["pkgurl"] = mod["pkgurl"]
 									print("Le mod va être installé. Patientez s'il vous plait...")
 									modspath = home+"/.minecraft/"
-									depot.installMod(package)
+									depot.installMod(package, )
 									print("")
 								else:
 									print("Le mod ne sera pas installé.")

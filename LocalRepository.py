@@ -7,7 +7,7 @@ class LocalRepository:
 
 	def __init__(self, appdata):
 		self.mcModsDirectory = appdata+"/.minecraft/mods/"
-		self.localRepoFileName = appdata+"/.minecraft/mcmodsinstaller.local.db"
+		self.localRepoFileName = appdata+"/.minecraft/McModsInstaller.localdb"
 		
 	def read(self):
 		if not os.path.exists(self.localRepoFileName):
@@ -80,3 +80,13 @@ class LocalRepository:
 				return True
 			except:
 				return False
+
+	def packageName(self,packageName,mcVersion):
+		return str(mcVersion)+"__"+packageName
+
+	def isInstalled(self, packageName, mcVersion):
+		# packageName = nom du paquet SELON LE REPO (ComputerCraft et pas 1.6.4__ComputerCraft)
+		package = self.getPackage(self.packageName(packageName, mcVersion))
+		if package == False:
+			return (False, {})
+		return (True, package)

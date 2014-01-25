@@ -41,13 +41,13 @@ class Remote:
 		except:
 			return False
 
-	def installMod(self,pkg):
+	def installMod(self,pkg,noconfirm = False, depends_treated = [],):
 		installpath = self.mcpath+"/mods/"+pkg["mcver"]
 
 		# Vérif : est il installé SELON LA DB dans sa version la plus récente ?
-		localPKG = self.localDB.getPackage(pkg["pkgurl"])
-		if localPKG != False:
-			if localPKG["version"] == pkg["version"] and localPKG["installname"] == pkg["installname"] and localPKG["mcver"] == pkg["mcver"]:
+		installed, localPKG = self.localDB.isInstalled(pkg["package_name"], pkg["mc_version"])
+		if installed != False:
+			if localPKG["version"] == pkg["version"] and localPKG["installname"] == pkg["installname"] and localPKG["mcver"] == pkg["mcver"] and not noconfirm:
 				print("> Le paquet "+pkg["name"]+" semble être dèjà installé... Voulez vous le réinstaller ?")
 				if input("[O/n] ").lower() == "n":
 					return True
@@ -66,18 +66,23 @@ class Remote:
 		# On checke les dépendances
 		print(">> Résolution des dépendances...")
 		for d in pkg["dependencies"]:
-			print("")
-			print("Installation de la dépendance "+d["name"])
 			
 
 			dep = self.downloadPkgInfo(d["pkgurl"])
+
 			if not dep:
-				print("Impossible de récupérer le paquet.")
+				print("Impossible de récupérer le paquet d'une dépendance..")
 				print("Une dépendance n'a pas été trouvée ! Le mod pourrait ne pas fonctionner")
 			else:
-				dep["pkgurl"] = d["pkgurl"]
-				self.installMod(dep)
-				print("")
+				dep_name = self.localDB.packageName(dep["package_name"],dep["mc_version"])
+				if not dep_name in depends_treated:
+					print("")
+					print("Installation de la dépendance "+d["name"])
+					dep["pkgurl"] = d["pkgurl"]
+					depends_treated.append(dep_name)
+					self.installMod(dep,noconfirm, depends_treated)
+					print("")
+
 
 		# Installation du mod
 		installed = False
@@ -97,9 +102,10 @@ class Remote:
 					except:
 						print("Erreur d'écriture du mod.")
 					else:
-						self.localDB.updatePackage(pkg["pkgurl"], pkg)
+						depends_treated = {}
+						self.localDB.updatePackage(self.localDB.packageName(pkg["package_name"], pkg["mc_version"]), pkg)
 						return True
-				
+		depends_treated = {}		
 		return False
 
 	def installClient(self, pkg):
