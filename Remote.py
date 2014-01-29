@@ -5,6 +5,8 @@ import os
 import shutil
 import json
 from distutils.dir_util import *
+import time
+import tkinter.messagebox as tkMessageBox
 
 class Remote:
 	def __init__(self, repo, directory, mcpath, LocalDB):
@@ -24,101 +26,137 @@ class Remote:
 		conn.request("GET", url)
 		rep = conn.getresponse()
 		if rep.status != 200:
-			print("Erreur : impossible de se connecter au serveur !! Code erreur : "+rep.reason)
-			return False
+			return (False, rep.reason)
 		else:
-			return rep.read()
+			return (True, rep.read())
 
 	def updateList(self):
+		result, content = self.downloadFile(self.repo, self.directory+"/repo.lst")
+		if result == False:
+			return (False, content)
 		try:
-			rep = json.loads(self.downloadFile(self.repo, self.directory+"/repo.lst").decode("UTF-8"))
+			rep = json.loads(content.decode("UTF-8"))
 			assert rep != False
 			self.repContent = rep
-			return rep
+			return (True, rep)
 		except:
-			return False
+			return (False, "Erreur")
 
 	def downloadPkgInfo(self,package):
+		result, content = self.downloadFile(self.repo, self.directory+"/"+package)
+		if not result:
+			return (result, content)
 		try:
-			return json.loads(self.downloadFile(self.repo, self.directory+"/"+package).decode("UTF-8"))
+			return (True, json.loads(content.decode("UTF-8")))
 		except:
-			return False
+			return (False,"Erreur d'interprétation du json)")
 
 	def getPackage(self, package_name, minecraft_version):
 		mods = self.repContent["mods"]
 		modv = mods.get(minecraft_version)
 		if modv == None:
-			print("Erreur : Le mod est introuvable (version incorrecte)")
-			return None
-
+			return (False, "La version de minecraft n'est pas prise en charge.")
 		mod = modv["mods"].get(package_name)
 		if mod == None:
-			print("Erreur : le mod est introuvable")
-			return None
+			return (False,"Le mod n'a pas été trouvé.")
 
-		return mod
+		return (True, mod)
+
+	def showModStatusText(self, text, caller = None, origin = None):
+		if caller == None:
+			print(text)
+		else:
+			if origin == "Update":
+				self.updateLog(text, caller)
+			elif origin == "Search":
+				caller.changeSearchInfoText("\n"+text, False)
+			else:
+				caller.changeModsInfoText("\n"+text,False)
+		return
 
 
-	def search(self,key):
+	def search(self,key, caller = None):
 		gotRes = False
 		key = key.lower()
-		print("#====[AFFICHAGE DES RESULTATS]====#")
-		print("# Recherche : "+key)
-		print("Nom du paquet : Nom du Mod (Version minecraft)")
+		results = []
+
 		for name, version in self.repContent["mods"].items():
 			for pkname, pk in version["mods"].items():
 				if key in pk["name"].lower() or key in pkname.lower():
-					print(name+"__"+pkname+" : "+pk["name"]+" ("+name+")")
+					results.append({"name":pk["name"],"version":name,"pkname":pkname})
 
+		if caller == None:
+			print("#====[AFFICHAGE DES RESULTATS]====#")
+			print("# Recherche : "+key)
+			print("Nom du paquet : Nom du Mod (Version minecraft)")
+			for res in results:
+				print(res["version"]+"__"+res["pkname"]+" : "+res["name"]+" ("+res["version"]+")")
+		else:
+			return results
 
-	def updateMods(self, noconfirm = False):
-		print("> Préparation de la mise à jour de tous les mods...")
+	def updateLog(self, message, caller = None):
+		if caller == None:
+			print(message)
+		else:
+			caller.changeUpdatesInfoText("\n"+message,False)
+		return
+
+	def updateMods(self, noconfirm = False, caller = None):
+		self.updateLog("Recherche des mises à jour...", caller)
 		pkgs = self.localDB.getAllPackages()
 		toupdate = []
-		print("> Vérification des mises à jour disponibles...")
-		
+	
 		# Vérif des updates
 		for reponame, package in pkgs.items():
-			print(">> Vérification des mises à jour de "+package["name"])
-			rep = self.downloadPkgInfo(package["pkgurl"])
+			self.updateLog("> Vérification des mises à jour de "+package["name"], caller)
+			ok, rep = self.downloadPkgInfo(package["pkgurl"])
 			
-			if rep == False:
-				print(">>> Impossible de vérifier la version du paquet (Erreur réseau)")
+			if ok == False:
+				self.updateLog(">> Impossible de vérifier la version du paquet (Erreur réseau : "+rep+")", caller)
 			else:
 				if rep["version"] > package["version"]:
 					rep["pkgurl"] = package["pkgurl"]
 					toupdate.append(rep)
-					print(">>> Mise à jour disponible.")
+					self.updateLog(">> Mise à jour disponible.", caller)
 				else:
-					print(">>> Non mis à jour")
+					self.updateLog(">> Non mis à jour", caller)
 			
 		if len(toupdate) == 0:
-			print("")
-			print("AUCUNE MISE A JOUR DISPONIBLE.")
+			self.updateLog("AUCUNE MISE A JOUR DISPONIBLE.", caller)
 		else:
-			print("Il y a "+str(len(toupdate))+" mises à jour à installer.")
-			if noconfirm or UserInteract.UserInteract().yesNoQuestion("Voulez vous les installer ?"):
-				print("")
-				print("Début de la mise à jour...")
-
-				for package in toupdate:
-					print("> Mise à jour de "+package["name"])
+			self.updateLog("Il y a "+str(len(toupdate))+" mise(s) à jour à installer.", caller)
+			if caller == None:
+				if noconfirm or UserInteract.UserInteract().yesNoQuestion("Voulez vous les installer ?"):
 					print("")
-					if not self.installMod(package, noconfirm):
-						print("> Erreur de mise à jour.")
-					else:
-						print("> Mise à jour du mod effectuée.")
-					print("")
+					print("Début de la mise à jour...")
 
-	def installMod(self,pkg,noconfirm = False, depends_treated = [],):
+					for package in toupdate:
+						print("> Mise à jour de "+package["name"])
+						print("")
+						if not self.installMod(package, noconfirm):
+							print("> Erreur de mise à jour.")
+						else:
+							print("> Mise à jour du mod effectuée.")
+						print("")
+						return True
+			
+		return toupdate
+
+	def yesNo(self, question, questionTitle="", caller = None):
+		if caller == None:
+			return UserInteract.UserInteract.yesNoQuestion(None, question)
+		else:
+			return tkMessageBox.askyesno(questionTitle, question)
+
+	def installMod(self,pkg,noconfirm = False, depends_treated = [], caller=None, origin = None):
 		installpath = self.mcpath+"/mods/"+pkg["mcver"]
 
 		# Vérif : est il installé SELON LA DB dans sa version la plus récente ?
 		installed, localPKG = self.localDB.isInstalled(pkg["package_name"], pkg["mc_version"])
 		if installed != False:
 			if localPKG["version"] == pkg["version"] and localPKG["installname"] == pkg["installname"] and localPKG["mcver"] == pkg["mcver"] and not noconfirm:
-				print("> Le paquet "+pkg["name"]+" semble être dèjà installé... Voulez vous le réinstaller ?")
-				if input("[O/n] ").lower() == "n":
+				continuer = self.yesNo("Le paquet "+pkg["name"]+" semble être dèjà installé... Voulez vous le réinstaller ?", "Paquet dèjà installé", caller)
+				if not continuer:
 					return True
 
 
@@ -133,51 +171,62 @@ class Remote:
 			mkpath(installpath)
 
 		# On checke les dépendances
-		print(">> Résolution des dépendances...")
+		self.showModStatusText(">> Résolution des dépendances...", caller, origin)
 		for d in pkg["dependencies"]:
 			
 
-			dep = self.downloadPkgInfo(d["pkgurl"])
+			res, dep = self.downloadPkgInfo(d["pkgurl"])
 
-			if not dep:
-				print("Impossible de récupérer le paquet d'une dépendance..")
-				print("Une dépendance n'a pas été trouvée ! Le mod pourrait ne pas fonctionner")
+			if not res:
+				self.showModStatusText("/!\ Impossible de récupérer le paquet d'une dépendance... Erreur : "+dep, caller, origin)
+				self.showModStatusText("/!\ Une dépendance n'a pas été trouvée ! Le mod pourrait ne pas fonctionner", caller, origin)
 			else:
 				dep_name = self.localDB.packageName(dep["package_name"],dep["mc_version"])
 				if not dep_name in depends_treated:
-					print("")
-					print("Installation de la dépendance "+d["name"])
+					self.showModStatusText("", caller, origin)
+					self.showModStatusText("Installation de la dépendance "+d["name"], caller, origin)
 					dep["pkgurl"] = d["pkgurl"]
 					depends_treated.append(dep_name)
-					self.installMod(dep,noconfirm, depends_treated)
-					print("")
+					self.installMod(dep,noconfirm, depends_treated, caller, origin)
+					self.showModStatusText("", caller,origin)
 
 
 		# Installation du mod
 		installed = False
-		print(">> Installation du mod")
+		self.showModStatusText(">> Installation du mod", caller, origin)
 		for m in pkg["mirrors"]:
 			
-			print("> Tentative de téléchargement de "+m["server"]+m["path"]+"...")
-			tosave = self.downloadFile(m["server"],m["path"])
+			self.showModStatusText("> Tentative de téléchargement de "+m["server"]+m["path"]+"...", caller, origin)
+			res, tosave = self.downloadFile(m["server"],m["path"])
 			
-			if tosave == False:
-					print("!> Erreur lors du téléchargement depuis "+m["server"])
+			if res == False:
+					self.showModStatusText("/!\ Erreur lors du téléchargement depuis "+m["server"]+". Erreur : "+tosave, caller, origin)
+					self.showModStatusText("", caller, origin)
 			else:
 				with open(installpath+"/"+pkg["installname"], "wb") as fichier:
 					try:
 						fichier.write(tosave)
-						print("> Le mod a été installé !")
+						self.showModStatusText("> Téléchargement réussi. Le mod a été installé", caller, origin)
 					except:
-						print("Erreur d'écriture du mod.")
+						self.showModStatusText("(!) Erreur d'écriture du mod, echec d'installation.", caller, origin)
 					else:
 						depends_treated = {}
 						self.localDB.updatePackage(self.localDB.packageName(pkg["package_name"], pkg["mc_version"]), pkg)
+						time.sleep(1)
 						return True
 		depends_treated = {}		
 		return False
 
-	def installClient(self, pkg):
+	def showClientStatusText(self, text, caller = None):
+		if caller == None:
+			print(text)
+		else:
+			caller.changeVersionsInfoText("\n"+text,False)
+		return
+
+
+
+	def installClient(self, pkg, caller = None):
 
 		# On vérifie si la version non moddée est installée
 		path = self.mcpath+"/"
@@ -189,46 +238,48 @@ class Remote:
 				if not os.path.exists(path+"versions/"+pkg["profilename"]):
 					mkpath(path+"versions/"+pkg["profilename"])
 				else:
-					print("[/!\\] Le dossier du profil existe")
+					self.showClientStatusText("[/!\\] Le dossier du profil existe",caller)
 
 				# S'il y a un fichier à télécharger
 				if "jarfile" in pkg.keys():
-					print("[1/3] Téléchargement de minecraft.jar...")
-					tosave = self.downloadFile(self.repo,self.directory+"/"+pkg["jarfile"])
-					if not tosave:
-						print("Erreur lors du téléchargement...")
+					self.showClientStatusText("[1/3] Téléchargement de minecraft.jar...",caller)
+					res, tosave = self.downloadFile(self.repo,self.directory+"/"+pkg["jarfile"])
+					if not res:
+						self.showClientStatusText("Erreur lors du téléchargement de "+self.repo+self.directory+"/"+pkg["jarfile"]+". Code erreur : "+tosave,caller)
 					else:
 						with open(path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".jar", "wb") as fichier:
 							try:
 								fichier.write(tosave)
 							except:
-								print("Erreur ! Impossible d'écrire "+pkg["profilename"]+".jar")
+								self.showClientStatusText("Erreur ! Impossible d'écrire "+pkg["profilename"]+".jar",caller)
 								return False
 				else:
-					print("[1/3] Copie du fichier...")
+					self.showClientStatusText("[1/3] Copie du fichier...",caller)
 					shutil.copy(path+"versions/"+pkg["version"]+"/"+pkg["version"]+".jar", path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".jar")
-					print("[1/3] Copie terminée.")
+					self.showClientStatusText("[1/3] Copie terminée.",caller)
 
-				print("[2/3] Téléchargement du profil")
-				tosave = self.downloadFile(self.repo,self.directory+"/"+pkg["json"])
+				self.showClientStatusText("[2/3] Téléchargement du profil",caller)
+				res, tosave = self.downloadFile(self.repo,self.directory+"/"+pkg["json"])
+				if not res:
+					self.showClientStatusText("Erreur lors du téléchargement de "+self.repo+self.directory+"/"+pkg["json"]+". Code erreur : "+tosave,caller)
 				with open(path+"versions/"+pkg["profilename"]+"/"+pkg["profilename"]+".json", "wb") as fichier:
 					try:
 						fichier.write(tosave)
 					except:
-						print("Erreur ! Impossible d'écrire dans le fichier ou de télécharger le fichier json")
+						self.showClientStatusText("Erreur ! Impossible d'écrire dans le fichier json du profil. ",caller)
 						return False
 
-				print("[2/3] Profil téléchargé et sauvegardé.")
-				print("[3/3] Ecriture dans le fichier de profils...")
+				self.showClientStatusText("[2/3] Profil téléchargé et sauvegardé.",caller)
+				self.showClientStatusText("[3/3] Ecriture dans le fichier de profils...",caller)
 				try:
 					with open(path+"launcher_profiles.json", "r") as fichier:
 						try:
 							jsonfile = fichier.read()
 						except:
-							print("Une erreur s'est produite.")
+							self.showClientStatusText("Une erreur s'est produite.",caller)
 							return False
 				except FileNotFoundError:
-					print("Erreur : Lecture du fichier de profils impossibles. Minecraft est il correctement installé ?")
+					self.showClientStatusText("Erreur : Lecture du fichier de profils impossibles. Minecraft est il correctement installé ?",caller)
 					return False
 
 				tab = json.loads(jsonfile)
@@ -238,14 +289,14 @@ class Remote:
 				with open(path+"launcher_profiles.json", "w") as fichier:
 					try:
 						fichier.write(json.dumps(tab))
-						print("[3/3] Terminé !")
-						print("Le profil a bien été installé ! ")
+						self.showClientStatusText("[3/3] Terminé !",caller)
+						self.showClientStatusText("Le profil a bien été installé ! ",caller)
 						return True
 					except:
-						print("Erreur lors de l'écriture du fichier de profils")
+						self.showClientStatusText("Erreur lors de l'écriture du fichier de profils",caller)
 						return False
 			else:
-				print("Minecraft n'est pas installé en "+pkg["version"]+". Veuillez l'installer avant toute chose")
+				self.showClientStatusText("Minecraft n'est pas installé en "+pkg["version"]+". Veuillez l'installer avant toute chose",caller)
 		else:
-			print("Minecraft n'est pas installé en "+pkg["version"]+". Veuillez l'installer avant toute chose")
+			self.showClientStatusText("Minecraft n'est pas installé en "+pkg["version"]+". Veuillez l'installer avant toute chose",caller)
 		return False

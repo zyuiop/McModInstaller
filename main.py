@@ -9,6 +9,8 @@ import math
 import sys, getopt
 import os
 import UserInteract
+from gui import *
+from tkinter import *
 
 # INITIALISATION DE CERTAINES CLASSES UTILES
 home = expanduser("~")+mcpath
@@ -20,20 +22,31 @@ UI.setLocalDB(localDB)
 
 # ANALYSE DES ARGUMENTS
 args = sys.argv[1:]
-if len(args) > 0:
-	try:
-		opts, args = getopt.getopt(sys.argv[1:],"uhm:v:p:c:s:",["update","help","mod=","version=","package=","client=","search=","noconfirm"])
-	except getopt.GetoptError:
-		print("Unknown argument. Try --help for help")
-	else:
-		from Args import *
-		cl = Args(localDB, settingsManager, home, opts, sys.argv[1:])
-		cl.execute()
+if len(args) == 0 or args[0] not in ("-c","--cli"):
+
+	# On vérifie les arguments. S'il y en a, on appelle l'analyseur d'arguments
+	if len(args) > 0:
+		try:
+			opts, args = getopt.getopt(sys.argv[1:],"uhm:v:p:c:s:",["update","help","mod=","version=","package=","client=","search=","noconfirm"])
+		except getopt.GetoptError:
+			print("Unknown argument. Try --help for help")
+		else:
+			from Args import *
+			cl = Args(localDB, settingsManager, home, opts, sys.argv[1:])
+			cl.execute()
+		exit()
+
+
+	# Pas d'arguments ? On appelle la GUI
+	fenetre = Tk()
+	fenetre.title("Minecraft Mods Installer v"+str(version))
+	interface = Interface(fenetre)
+
+	interface.mainloop()
 	exit()
 
-
-# Program start
 print("Minecraft Mods Installer - Version "+version)
+print("Bienvenue dans l'interface console !")
 Exec = True
 
 
@@ -60,11 +73,12 @@ while True:
 
 	# 4. Récupération de la liste des oaqyets
 	print("Mise à jour de la base de donnée de paquets depuis 'http://"+oldrepo+repoDirectory+"'... Ceci peut prendre quelques instants")
-	repo = depot.updateList()
+	success, repo = depot.updateList()
 
 	# 5. Vérification des erreurs
-	if not repo:
-		print("!!! ERREUR : Impssible de se connecter au dépôt..")
+	if not success:
+		print("!!! ERREUR : Impssible de se connecter au dépôt.")
+		print("Erreur : "+repo)
 		if UI.yesNoQuestion("Voulez vous changer de dépôt ?", True):
 			repo, repoDirectory = UI.inputDepot()
 			settingsManager.updateNode("repository",repo)
@@ -119,8 +133,10 @@ while Exec:
 			if len(reste) > 1:
 				print("Erreur : nom de paquet non supporté")
 			else:
-				pack = depot.getPackage(reste[0], ver[0])
-				if pack != None:
+				success, pack = depot.getPackage(reste[0], ver[0])
+				if success == False:
+					print("Une erreur est survenue : "+pack)
+				else:
 					UI.packageInstallPrompt(pack["pkgurl"])
 
 	elif choix == 4:
@@ -220,9 +236,10 @@ while Exec:
 		else:
 			sel_cl = clients[num]
 			print("> Récupération des infos du paquet...")
-			package = depot.downloadPkgInfo(sel_cl["pkgurl"])
-			if package == False:
+			success, package = depot.downloadPkgInfo(sel_cl["pkgurl"])
+			if success == False:
 				print("[ERREUR RESEAU] Impossible de récupérer le paquet.")
+				print("Détails de l'erreur : "+package)
 			else:
 				print("#====[Affichage client : "+sel_cl["name"]+"]====#")
 				print("VERSION : "+package["version"])

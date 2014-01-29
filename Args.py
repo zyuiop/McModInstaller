@@ -49,6 +49,7 @@ class Args:
 				print(" -u or --update : Update all mods")
 				print(" -s or --search : search a mod")
 				print(" --noconfirm : don't confirm before installing mod")
+				print(" --cli : don't open the GUI, only the console interface")
 				return True
 			elif opt in ("-m", "--mod"):
 				mod = arg

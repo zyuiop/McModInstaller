@@ -9,7 +9,7 @@ class UserInteract:
 		self.remote = remote
 
 
-	def yesNoQuestion(self,question, defaultNo = False):
+	def yesNoQuestion(self, question, defaultNo = False):
 		rep = "x"
 		while rep.lower() not in ("o","n", ""):
 			print(question)
@@ -30,6 +30,16 @@ class UserInteract:
 
 	def mainMenu(self):
 		return 0
+
+	def showModStatusText(self, text, caller = None, origin = None):
+		if caller == None:
+			print(text)
+		else:
+			if origin == None:
+				caller.changeModsInfoText("\n"+text,False)
+			elif origin == "Search":
+				caller.changeSearchInfoText("\n"+text,False)
+		return
 
 	def inputDepot(self):
 		if not self.yesNoQuestion("Voulez vous utiliser le dépôt par défaut ? (Non = dépôt personnalisé) "):
@@ -74,28 +84,33 @@ class UserInteract:
 		choix.append("Changer de dépôt")
 		return self.menu("Menu Principal",choix)
 
-	def packageInstallPrompt(self, packageUrl, noconfirm = False):
+	def packageInfoShower(self, package, caller = None, origin = None):
+		self.showModStatusText("VERSION : "+package["version"], caller)
+		self.showModStatusText("NOM PAQUET : "+package["mc_version"]+"__"+package["package_name"], caller, origin)
+		self.showModStatusText("DESCRIPTION : "+package["description"], caller, origin)
+		self.showModStatusText("URL du .PKG : "+package["pkgurl"], caller, origin)
+		self.showModStatusText("POUR MINECRAFT "+package["requires"], caller, origin)
+		self.showModStatusText("SITE WEB : "+package["website"], caller, origin)
+		self.showModStatusText("DEPENDANCES : ", caller, origin)
+		for dep in package["dependencies"]:
+			self.showModStatusText(" -> "+dep["name"], caller, origin)
+
+	def packageInstallPrompt(self, packageUrl, noconfirm = False, caller = None):
 		# Récup du paquet
 		if self.remote == None:
 			print("Erreur interne : la méthode setRemote(remote) n'a pas été appelée")
 			return False
 
-		package = self.remote.downloadPkgInfo(packageUrl)
-		if package == False:
+		result, package = self.remote.downloadPkgInfo(packageUrl)
+		if result == False:
 			print("Impossible de récupérer le paquet...")
+			print("Détails de l'erreur : "+package)
 		else:
-			print("#====[Affichage du mod : "+package["name"]+"]====#")
-			print("VERSION : "+package["version"])
-			print("NOM PAQUET : "+package["mc_version"]+"__"+package["package_name"])
-			print("DESCRIPTION : "+package["description"])
-			print("URL du .PKG : "+packageUrl)
-			print("POUR MINECRAFT "+package["requires"])
-			print("SITE WEB : "+package["website"])
-			print("DEPENDANCES : ")
-			for dep in package["dependencies"]:
-				print(" -> "+dep["name"])
+			package["pkgurl"] = packageUrl
+			self.showModStatusText("#====[Affichage du mod : "+package["name"]+"]====#",caller)
+			self.packageInfoShower(package, caller)
 
 			if noconfirm or self.yesNoQuestion("== Voulez vous installer ce mod ? =="):
-				package["pkgurl"] = packageUrl
+				
 				print("Le mod va être installé. Patientez s'il vous plait...")
 				self.remote.installMod(package,noconfirm)
