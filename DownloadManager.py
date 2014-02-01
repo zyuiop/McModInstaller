@@ -19,7 +19,8 @@ class DownloadManager:
         self.parent.logs.yview(END)
     
     def download(self, pkg, is_first=True):
-        worked = false
+        # !!! LOCAL DB NON SUPPORTEE !!!
+        worked = False
         i = 0
         if pkg.get("modtype") == None: # C'est un client
             vanilladir = self.parent.remote.mcpath + "/versions/" + pkg['version']
@@ -31,15 +32,18 @@ class DownloadManager:
                     else:
                         self.appendConsole("/!\\ Le dossier " + profilepath + " existe.")
                     if "jarfile" in pkg.keys():
-                        self.appendConsole("Téléchargement du minecraft.jar")
-                        if not self.parent.remote.downloadFile(self.parent.remote, 'http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['jarfile'], profilepath + "/" + pkg['profilename'] + '.jar', "Téléchargé : {} / {}", "Téléchargement du minecraft.jar"):
-                            self.appendConsole("Échec lors du téléchargement")
+                        self.appendConsole("[1/2] Téléchargement du minecraft.jar")
+                        if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['jarfile'], profilepath + "/" + pkg['profilename'] + '.jar', "Téléchargé : {} / {}", "Téléchargement du minecraft.jar"):
+                            self.appendConsole("--> Échec lors du téléchargement")
                     else:
-                        self.appendConsole("Copie du minecraft.jar")
+                        self.appendConsole("[1/2] Copie du minecraft.jar")
                         shutil.copy(vanilladir + "/" + pkg['version'] + ".jar", profilepath + "/" + pkg['profilename'] + ".jar")
-                        self.appendConsole("Copie terminée") # Comme notre relation, salaud !
-                    self.appendConsole("Téléchargement du profil")
-                    if not self.parent.remote.downloadFile(self.parent.remote, 'http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json"):                        self.appendConsole("Échec lors du téléchargement du profil")
+                        self.appendConsole("--> Copie terminée") # Comme notre relation, salaud !
+                    self.appendConsole("[2/2] Téléchargement du profil")
+                    if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json", "Téléchargé : {} / {}", "Récupération du profil"):                        
+                        self.appendConsole("--> Échec lors du téléchargement du profil")
+                    else:
+                        self.appendConsole("--> Terminé. Le client a été installé.")
             else:
                 self.appendConsole("La version " + pkg['version'] + " de Minecraft n'est pas installée.")        
         else:
@@ -52,15 +56,15 @@ class DownloadManager:
                 mkpath(path)
             path += "/" + pkg['package_name'] + ".jar"
             i = 0
-            worked = false
+            worked = False
             while not worked and i < len(pkg['mirrors']):
-                worked = self.parent.remote.downloadFile(self.parent.remote, 'http://' + pkg['mirrors'][i]['server'] + pkg['mirrors'][i]['path'], path, "Téléchargé : {} / {}", "Téléchargement de " + pkg['name'])
+                worked = self.parent.remote.downloadFile('http://' + pkg['mirrors'][i]['server'] + pkg['mirrors'][i]['path'], path, "Téléchargé : {} / {}", "Téléchargement de " + pkg['name'])
                 i += 1
             self.dependencies.append(pkg['name'])
             for d in pkg['dependencies']:
                 if not d['name'] in self.dependencies:
                     self.dependencies.append(d['name'])
-                    dpkg = self.parent.remote.downloadPkgInfo(self.parent.remote, d['name'])
+                    dpkg = self.parent.remote.downloadPkgInfo(d['name'])
                     self.download(self, dpkg, False)
             if is_first == True:
                 self.dependencies = []

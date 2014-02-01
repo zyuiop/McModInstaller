@@ -45,7 +45,7 @@ class Remote:
 			return (False, "Erreur")
 
 	def downloadPkgInfo(self,package):
-		result, content = self.downloadFile(self.repo, self.directory+"/"+package, gui_filename="Récupération du paquet")
+		result, content = self.downloadFile("http://"+self.repo+self.directory+"/"+package, gui_filename="Récupération du paquet")
 		if not result:
 			return (result, content)
 		try:

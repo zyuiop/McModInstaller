@@ -1,6 +1,7 @@
 from DownloadManager import *
 import tkinter.ttk as ttk
 from tkinter import *
+import tkinter.messagebox as tkMessageBox
 
 # VersionsTab : gestion de l'onglet des versions de MC
 class VersionsTab(DownloadManager):
@@ -28,7 +29,7 @@ class VersionsTab(DownloadManager):
         if not package:
             return False
 
-        self.appendConsole("\n\n#====[Affichage des informations client]====#")
+        self.appendConsole("\n#====[Affichage des informations client]====#")
         self.appendConsole("NOM DU CLIENT : "+package["name"], False)
         self.appendConsole("VERSION : "+package["version"], False)
         self.appendConsole("DESCRIPTION : "+package["description"], False)
@@ -42,7 +43,7 @@ class VersionsTab(DownloadManager):
             return False
         
         selectedClient = self.versionsList[self.versions.index(sel[0])]
-        self.appendConsole("\n\nChargement des informations du client...")
+        self.appendConsole("\nChargement des informations du client...")
         res, package = self.parent.remote.downloadPkgInfo(selectedClient["pkgurl"])
 
         if not res:
@@ -59,16 +60,9 @@ class VersionsTab(DownloadManager):
             return False
 
         if not tkMessageBox.askyesno("Installer le client ?", "Voulez vous installer le client "+package["name"] +" ?"):
-            self.changeVersionsInfoText("L'installation a été avortée.")
+            self.appendConsole("L'installation a été avortée.")
             return False
 
-        self.changeVersionsInfoText("\nDébut de l'installation du client...", False)
+        self.appendConsole("\nDébut de l'installation du client.", False)
 
-        res = self.repo.installClient(package, self)
-        self.changeVersionsInfoText("\nFin de l'installation. Résultat : ", False)
-        if res == False:
-            tkMessageBox.showerror("Erreur","Erreur : le client n'a pas été installé. Consultez le log pour plus d'informations.")
-            self.changeVersionsInfoText("Echec...", False)
-        else:
-            tkMessageBox.showinfo("Réussite","Le client a bien été installé. Vous le trouverez dans votre launcher :)")
-            self.changeVersionsInfoText("Réussite !", False)
+        self.download(package)
