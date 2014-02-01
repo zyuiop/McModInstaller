@@ -1,6 +1,7 @@
 import os
 import shutil
 import Remote
+from tkinter import *
 
 # C'est une classe abstraite, tu l'utilises directement et tu vas voir à la sortie.
 class DownloadManager:
