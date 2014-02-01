@@ -84,7 +84,7 @@ class Interface(Frame):
             self.logs.delete("1.0",END)
         self.logs.insert(END, text)
         self.logs.config(state=DISABLED)
-        self.parent.logs.yview(END)
+        self.logs.yview(END)
 
     #
     # Fonction de mise à jour de la progression
