@@ -43,7 +43,9 @@ class DownloadManager:
                     if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json", "Téléchargé : {} / {}", "Récupération du profil"):                        
                         self.appendConsole("--> Échec lors du téléchargement du profil")
                     else:
-                        self.appendConsole("--> Terminé. Le client a été installé.")
+                        self.appendConsole("--> Téléchargement terminé.")
+                        self.parent.localDB.updatePackage(self.parent.localDB.packageName(pkg["package_name"], pkg["mc_version"]), pkg)
+                        self.appendConsole("--> Base de données actualisée. Le client a été installé.")
             else:
                 self.appendConsole("La version " + pkg['version'] + " de Minecraft n'est pas installée.")        
         else:
