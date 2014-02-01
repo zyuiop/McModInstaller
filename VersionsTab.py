@@ -1,5 +1,6 @@
 from DownloadManager import *
 import tkinter.ttk as ttk
+from tkinter import *
 
 # VersionsTab : gestion de l'onglet des versions de MC
 class VersionsTab(DownloadManager):
@@ -9,7 +10,7 @@ class VersionsTab(DownloadManager):
         self.versions = ttk.Treeview(self.parent.tabs[1], selectmode="browse")
         self.versions.heading("#0", text='Nom du client')
         
-        clients = self.repContent["clients"]
+        clients = self.parent.repContent["clients"]
         self.versionsList = []
         for k,c in clients.items():
             c["key"] = k
@@ -17,8 +18,8 @@ class VersionsTab(DownloadManager):
             self.versions.insert('', 'end', text=c["name"])
         self.versions.grid(row=0,column=0)
 
-        Button(self.tabs[1],text="Plus d'infos",command=self.showInfo).grid(row=1,column=0)
-        Button(self.tabs[1],text="Installer",command=self.install).grid(row=2,column=0)
+        Button(self.parent.tabs[1],text="Plus d'infos",command=self.showInfo).grid(row=1,column=0)
+        Button(self.parent.tabs[1],text="Installer",command=self.install).grid(row=2,column=0)
 
 
     def showInfo(self):
@@ -27,25 +28,25 @@ class VersionsTab(DownloadManager):
         if not package:
             return False
 
-        self.changeVersionsInfoText("#====[Affichage des informations client]====#")
-        self.changeVersionsInfoText("\nNOM DU CLIENT : "+package["name"], False)
-        self.changeVersionsInfoText("\nVERSION : "+package["version"], False)
-        self.changeVersionsInfoText("\nDESCRIPTION : "+package["description"], False)
-        self.changeVersionsInfoText("\nURL du .PKG : "+package["pkgurl"], False)
-        self.changeVersionsInfoText("\nNOM DU PAQUET : "+package["key"], False)
+        self.appendConsole("\n\n#====[Affichage des informations client]====#")
+        self.appendConsole("NOM DU CLIENT : "+package["name"], False)
+        self.appendConsole("VERSION : "+package["version"], False)
+        self.appendConsole("DESCRIPTION : "+package["description"], False)
+        self.appendConsole("URL du .PKG : "+package["pkgurl"], False)
+        self.appendConsole("NOM DU PAQUET : "+package["key"], False)
 
     def getClientInfo(self):
-        sel = self.mcVersions.selection()
+        sel = self.versions.selection()
         if len(sel) == 0:
             tkMessageBox.showwarning("Aucune sélection","Vous n'avez sélectionné aucune version à afficher.")
             return False
         
-        selectedClient = self.mcVersionsList[self.mcVersions.index(sel[0])]
-        self.changeVersionsInfoText("Chargement des informations du client...")
-        res, package = self.repo.downloadPkgInfo(selectedClient["pkgurl"])
+        selectedClient = self.versionsList[self.versions.index(sel[0])]
+        self.appendConsole("\n\nChargement des informations du client...")
+        res, package = self.parent.remote.downloadPkgInfo(selectedClient["pkgurl"])
 
         if not res:
-            self.changeVersionsInfoText("Une erreur s'est produite, impossible de récupérer les infos du client. \nErreur : "+package)
+            self.appendConsole("Une erreur s'est produite, impossible de récupérer les infos du client. \nErreur : "+package)
             return False
         package["pkgurl"] = selectedClient["pkgurl"]
         package["key"] = selectedClient["key"]

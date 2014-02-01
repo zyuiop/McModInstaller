@@ -84,6 +84,7 @@ class Interface(Frame):
             self.logs.delete("1.0",END)
         self.logs.insert(END, text)
         self.logs.config(state=DISABLED)
+        self.parent.logs.yview(END)
 
     #
     # Fonction de mise à jour de la progression
@@ -170,7 +171,7 @@ class Interface(Frame):
     # CONNEXION AU DEPOT ET CHARGEMENT
 
     def repoTab(self):
-        self.repoLine = StringVar()
+        self.remoteLine = StringVar()
 
         # Préparation
         repo = self.settings.getNode("repository")
@@ -179,12 +180,12 @@ class Interface(Frame):
             url = "minecraft.zgalaxy.fr/"
         else:
             url = repo+repoDirectory
-        self.repoLine.set(url)
+        self.remoteLine.set(url)
 
         # Affichage des gros boutons sympas
         Label(self.tabs[0], text="Entrez l'adresse du dépôt : (sans le http://) ").grid(column=0,row=0,sticky=(W,E))
 
-        repoLineEdit = Entry(self.tabs[0], textvariable=self.repoLine, width=30)
+        repoLineEdit = Entry(self.tabs[0], textvariable=self.remoteLine, width=30)
         repoLineEdit.grid(column=1, row=0, sticky=(W, E))
 
         repoButton = Button(self.tabs[0], text="Connexion", command=self.connectToRepo)
@@ -196,7 +197,7 @@ class Interface(Frame):
         Frame(self).pack()
 
     def connectToRepo(self):
-        repo = self.repoLine.get()
+        repo = self.remoteLine.get()
 
         self.appendConsole("Connexion à "+repo+"...")
         # On update la config du dépôt :
@@ -216,10 +217,10 @@ class Interface(Frame):
         self.updateRepoConfig(serveur, dossier)
 
         # On se connecte au repository :
-        self.repo = rem.Remote(serveur, dossier, self.home, self.localDB, True, gui_parent = self)
+        self.remote = rem.Remote(serveur, dossier, self.home, self.localDB, True, gui_parent = self)
         self.appendConsole("\nMise à jour de la base de données...")
 
-        rep, self.repContent = self.repo.updateList()
+        rep, self.repContent = self.remote.updateList()
         if rep == False:
             print(self.repContent)
             self.connStatus.configure(text="Impossible d'atteindre le dépot. Erreur : "+self.repContent, fg="red")

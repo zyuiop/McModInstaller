@@ -16,6 +16,7 @@ class DownloadManager:
             self.parent.logs.delete("1.0",END)
         self.parent.logs.insert(END, text + "\n")
         self.parent.logs.config(state=DISABLED)
+        self.parent.logs.yview(END)
     
     def download(self, pkg, is_first=True):
         worked = false
