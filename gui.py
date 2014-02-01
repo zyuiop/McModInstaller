@@ -15,6 +15,7 @@ import UserInteract
 import tkinter.messagebox as tkMessageBox
 import time
 from VersionsTab import *
+from ModsTab import *
 
 
 class Interface(Frame):
@@ -239,7 +240,9 @@ class Interface(Frame):
         self.notebook.tab(2, state="normal")
         self.notebook.tab(3, state="normal")
         self.notebook.tab(5, state="normal")
-
+        
+        modsTab = ModsTab(self)
+        modsTab.initTab()
         versTab = VersionsTab(self)
         versTab.initTab()
 """
