@@ -7,9 +7,10 @@ import json
 from distutils.dir_util import *
 import time
 import tkinter.messagebox as tkMessageBox
+import downloader
 
 class Remote:
-	def __init__(self, repo, directory, mcpath, LocalDB):
+	def __init__(self, repo, directory, mcpath, LocalDB, gui = False, gui_parent = None):
 		
 		"""Initialise la classe Remote
 		repo = domaine du repository (exemple: minecraft.zgalaxy.fr)
@@ -20,15 +21,17 @@ class Remote:
 		self.directory = directory
 		self.mcpath = mcpath
 		self.localDB = LocalDB
+		self.gui = gui
+		self.gui_parent = None
 
-	def downloadFile(self,server,url,progress=True):
-		conn = http.client.HTTPConnection(server)
-		conn.request("GET", url)
-		rep = conn.getresponse()
-		if rep.status != 200:
-			return (False, rep.reason)
+	def downloadFile(self,domain, url,label="Downloaded {} / {}",gui_filename = None, autoclose = False):
+		dl = downloader.Downloader("http://"+domain+url, "temp.bin",label, self.gui, gui_filename = gui_filename)
+		res,rep = dl.start(autoclose)
+		if res != True:
+			return (False, rep)
 		else:
-			return (True, rep.read())
+			f = open(rep, "rb")
+			return (True, f.read())
 
 	def updateList(self):
 		result, content = self.downloadFile(self.repo, self.directory+"/repo.lst")
