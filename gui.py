@@ -5,7 +5,7 @@ from config import *
 from os.path import expanduser
 from LocalRepository import *
 from Settings import *
-from Remote import *
+import Remote as rem
 import functions
 import json
 import math
@@ -14,6 +14,7 @@ import os
 import UserInteract
 import tkinter.messagebox as tkMessageBox
 import time
+from VersionsTab import *
 
 
 class Interface(Frame):
@@ -22,7 +23,7 @@ class Interface(Frame):
     def __init__(self, fenetre, **kwargs):
         Frame.__init__(self, fenetre, width=800, height=576, **kwargs)
         self.pack(fill=BOTH)
-
+        self.fenetre = fenetre
         #
         # Récupération des variables à la con
         #
@@ -215,11 +216,12 @@ class Interface(Frame):
         self.updateRepoConfig(serveur, dossier)
 
         # On se connecte au repository :
-        self.repo = Remote(serveur, dossier, self.home, self.localDB, True, gui_parent = self)
+        self.repo = rem.Remote(serveur, dossier, self.home, self.localDB, True, gui_parent = self)
         self.appendConsole("\nMise à jour de la base de données...")
 
         rep, self.repContent = self.repo.updateList()
         if rep == False:
+            print(self.repContent)
             self.connStatus.configure(text="Impossible d'atteindre le dépot. Erreur : "+self.repContent, fg="red")
         else:
             self.connStatus.configure(text="Connexion réussie.", fg="green")
@@ -236,6 +238,9 @@ class Interface(Frame):
         self.notebook.tab(2, state="normal")
         self.notebook.tab(3, state="normal")
         self.notebook.tab(5, state="normal")
+
+        versTab = VersionsTab(self)
+        versTab.initTab()
 """
 
     ######################################

@@ -2,6 +2,7 @@ import urllib.request as urllib
 import math
 import time
 import _thread
+import os
 
 class Downloader:
 	def __init__(self, url, saveas, label = "Downloaded {} / {}", gui = False, gui_filename=None, gui_parent = None):
@@ -30,7 +31,8 @@ class Downloader:
 		file_size_dl = blocksize*blocks
 		if file_size_dl > total:
 			file_size_dl = total
-
+		self.size = total
+		self.dl_size = file_size_dl
 		bars = math.floor((file_size_dl * 100 / total))
 		pr = self.gui_parent
 		string = self.label.format(self.humanSize(file_size_dl), self.humanSize(total))
@@ -59,8 +61,16 @@ class Downloader:
 			if self.gui_parent != None:
 				self.finished = True
 				self.error = self.saveas
-				_thread.start_new_thread(self.guiDownload, ())
+				self.size = 0
+				self.dl_size = -1
 
+				_thread.start_new_thread(self.guiDownload, ())
+				
+				while self.dl_size < self.size and self.finished != False:
+					self.gui_parent.after(25)
+					self.gui_parent.fenetre.update()
+
+				# On attend la fin du DL
 				return (self.finished,self.error)
 			print("Début du téléchargement...\n")
 			urllib.urlretrieve(self.url, self.saveas, self.progressBar)
