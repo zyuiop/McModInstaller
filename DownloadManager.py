@@ -16,7 +16,7 @@ class DownloadManager:
         self.parent.logs.insert(END, text + "\n")
         self.parent.logs.config(state=DISABLED)
     
-    def download(self, pkg):
+    def download(self, pkg, is_first=True):
         worked = false
         i = 0
         if pkg.get("modtype") == None: # C'est un client
@@ -59,5 +59,6 @@ class DownloadManager:
                 if not d['name'] in self.dependencies:
                     self.dependencies.append(d['name'])
                     dpkg = self.parent.remote.downloadPkgInfo(self.parent.remote, d['name'])
-                    self.download(self, dpkg)
-            
+                    self.download(self, dpkg, False)
+            if is_first == True:
+                self.dependencies = []
