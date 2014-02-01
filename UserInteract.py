@@ -35,10 +35,7 @@ class UserInteract:
 		if caller == None:
 			print(text)
 		else:
-			if origin == None:
-				caller.changeModsInfoText("\n"+text,False)
-			elif origin == "Search":
-				caller.changeSearchInfoText("\n"+text,False)
+			caller.appendConsole(text)
 		return
 
 	def inputDepot(self):

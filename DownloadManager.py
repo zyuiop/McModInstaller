@@ -48,6 +48,7 @@ class DownloadManager:
             else:
                 self.appendConsole("La version " + pkg['version'] + " de Minecraft n'est pas installée.")        
         else:
+            self.appendConsole("\nInstallation de "+pkg["name"])
             path = self.parent.remote.mcpath + "/"
             if pkg['modtype'] == 'coremod':
                 path += "coremods"
@@ -59,16 +60,29 @@ class DownloadManager:
             i = 0
             worked = False
             while not worked and i < len(pkg['mirrors']):
-                worked = self.parent.remote.downloadFile('http://' + pkg['mirrors'][i]['server'] + pkg['mirrors'][i]['path'], path, "Téléchargé : {} / {}", "Téléchargement de " + pkg['name'])
+                url = 'http://' + pkg['mirrors'][i]['server'] + pkg['mirrors'][i]['path']
+                self.appendConsole("--> Tentative de téléchargement de "+url+"...")
+                worked, err = self.parent.remote.downloadFile(url, path, "Téléchargé : {} / {}", "Téléchargement de " + pkg['name'])
+                if not worked:
+                    self.appendConsole("--> Erreur de téléchargement : "+err)
                 i += 1
             self.dependencies.append(pkg['name'])
+
             for d in pkg['dependencies']:
                 if not d['name'] in self.dependencies:
                     self.dependencies.append(d['name'])
-                    dpkg = self.parent.remote.downloadPkgInfo(d['name'])
-                    self.download(self, dpkg, False)
+                    rep, dpkg = self.parent.remote.downloadPkgInfo(d['pkgurl'])
+                    if rep:
+                        self.download(dpkg, False)
+                    else:
+                        self.appendConsole("--> Erreur de lecture de la dépendance : "+dpkg)
             if is_first == True:
                 self.dependencies = []
 
             self.parent.localDB.updatePackage(self.parent.localDB.packageName(pkg["package_name"], pkg["mc_version"]), pkg)
-            self.appendConsole("--> Le mod a été installé.")
+
+            if is_first:
+                self.appendConsole("--> Le mod a été installé.")     
+            else:
+                self.appendConsole("--> Dépendance installée.")
+            

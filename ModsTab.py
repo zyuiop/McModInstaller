@@ -12,12 +12,8 @@ class ModsTab(DownloadManager):
             self.MODSMcVersions.insert(END, ver["version"])
         self.MODSMcVersions.grid(row=1,column=0)
 
-        Button(self.parent.tabs[2],text="Lister les mods",command=self.refreshModList).grid(row=2,column=0)
-        infoFrame = LabelFrame(self.parent.tabs[2],labelanchor="n",text="Informations :")
-        infoFrame.grid(row=0,column=2,rowspan=3)
-        self.modInfo = Text(infoFrame)
-        self.modInfo.config(state=DISABLED)
-        self.modInfo.pack()
+        self.listButton = Button(self.parent.tabs[2],text="Lister les mods",command=self.refreshModList)
+        self.listButton.grid(row=2,column=0)
 
     def refreshModList(self):
         frame = Frame(self.parent.tabs[2])
@@ -42,15 +38,16 @@ class ModsTab(DownloadManager):
             self.modsList.append(m)
             self.mods.insert('', 'end', text=m["name"])
         self.mods.pack()
-        self.appendConsole("Sélectionnez un mod et cliquez sur \"Plus d'infos\"")
-        Button(frame,text="Plus d'infos", command=self.showModInfo).pack()
-        Button(frame,text="Installer", command=self.installMod).pack()
+        self.showButton = Button(frame,text="Plus d'infos", command=self.showModInfo)
+        self.showButton.pack()
+        self.instButton = Button(frame,text="Installer", command=self.installMod)
+        self.instButton.pack()
         
     def showModInfo(self):
         package = self.getModInfo()
         if not package:
             return False
-        self.appendConsole("#===[Informations sur : " + package["name"] + "]====#")
+        self.appendConsole("\n#===[Informations sur : " + package["name"] + "]====#")
         self.parent.UI.packageInfoShower(package, self)
 
     def getModInfo(self):
@@ -68,6 +65,7 @@ class ModsTab(DownloadManager):
         package["pkgurl"] = selectedMod["pkgurl"]
         package["key"] = selectedMod["key"]
         return package
+
     def installMod(self):
         package = self.getModInfo()
         if not package:
@@ -76,14 +74,15 @@ class ModsTab(DownloadManager):
         if not tkinter.messagebox.askyesno("Installer le mod ?", "Voulez-vous installer le mod " + package["name"] + " ?"):
             self.appendConsole("Installation annulée")
             return False
-        self.appendConsole("Début de l'installation ...")
-        res = self.parent.repo.installMod(package, False, [], self)
-        self.appendConsole("Fin de l'installation :")
-        if res == False:
-            tkinter.messagebox.showerror("Erreur", "Erreur, le mod n'a pas été installé. Consultez le log pour plus d'informations.")
-            self.appendConsole("Échec ... tout comme ta naissance")
-        else:
-            tkinter.messagebox.showinfo("Réussite", "Le mod a bien été installé")
-            self.appendConsole("Réussie !")
+        self.showButton.config(state=DISABLED)
+        self.instButton.config(state=DISABLED)
+        self.listButton.config(state=DISABLED)
+
+        res = self.download(package)
+        
         self.parent.refreshModContent()
+
+        self.showButton.config(state=NORMAL)
+        self.instButton.config(state=NORMAL)
+        self.listButton.config(state=NORMAL)
         
