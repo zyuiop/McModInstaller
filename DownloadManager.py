@@ -43,7 +43,7 @@ class DownloadManager:
                     if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json", "Téléchargé : {} / {}", "Récupération du profil"):                        
                         self.appendConsole("--> Échec lors du téléchargement du profil")
                     else:
-                        self.appendConsole("--> Téléchargement terminé. Le mod a été installé.")
+                        self.appendConsole("--> Téléchargement terminé. Le client a bien été installé.")
                         
             else:
                 self.appendConsole("La version " + pkg['version'] + " de Minecraft n'est pas installée.")        
@@ -82,7 +82,7 @@ class DownloadManager:
             self.parent.localDB.updatePackage(self.parent.localDB.packageName(pkg["package_name"], pkg["mc_version"]), pkg)
 
             if is_first:
-                self.appendConsole("--> Le mod a été installé.")     
+                self.appendConsole("--> Téléchargement terminé. Le mod a été installé.")     
             else:
                 self.appendConsole("--> Dépendance installée.")
             
