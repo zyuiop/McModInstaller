@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from config import *
 from os.path import expanduser
 from LocalRepository import *
