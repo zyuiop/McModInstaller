@@ -56,7 +56,7 @@ class ModsTab(DownloadManager):
             tkinter.messagebox.showwarning("Aucune sélection", "Vous n'avez sélectionné aucun mod.")
             return False
         selectedMod = self.modsList[self.mods.index(sel[0])]
-        self.appendConsole("Chargement des informations du client")
+        self.appendConsole("Chargement des informations du mod...")
         res, package = self.parent.remote.downloadPkgInfo(selectedMod["pkgurl"])
 
         if not res:
