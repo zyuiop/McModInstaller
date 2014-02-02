@@ -18,7 +18,7 @@ class UpdatesTab(DownloadManager):
         liste.heading('newversion', text='Version Mod')
         liste.heading('#0', text='Nom')
         toupdate = self.ModsToUpdate()
-        self.appendConsole(str(toupdate))
+        self.appendConsole("\nIl y a "+str(len(toupdate))+" mise(s) à jour à installer.")
         for up in toupdate:
             liste.insert('', 'end', text=up["name"], values=up["mcver"] + " " + up["version"])
         liste.grid(row=1,column=0,columnspan=2)
