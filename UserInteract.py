@@ -3,7 +3,7 @@ from config import *
 from DownloadManager import *
 
 class UserInteract(DownloadManager):
-	def __init__(self, remote, cli):
+	def __init__(self, remote=None, cli=False):
 		self.remote = remote
 		DownloadManager.__init__(self,self, cli)
 
@@ -37,7 +37,11 @@ class UserInteract(DownloadManager):
 		return 0
 
 	def showModStatusText(self, text, caller = None, origin = None):
-		print(text)
+		if caller == None:
+			print(text)
+		else:
+			caller.appendConsole(text)
+		return
 
 	def inputDepot(self):
 		if not self.yesNoQuestion("Voulez vous utiliser le dépôt par défaut ? (Non = dépôt personnalisé) "):

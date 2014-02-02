@@ -16,6 +16,7 @@ import tkinter.messagebox as tkMessageBox
 import time
 from VersionsTab import *
 from ModsTab import *
+from SearchTab import *
 
 
 class Interface(Frame):
@@ -227,7 +228,7 @@ class Interface(Frame):
             self.connStatus.configure(text="Impossible d'atteindre le dépot. Erreur : "+self.repContent, fg="red")
         else:
             self.connStatus.configure(text="Connexion réussie.", fg="green")
-            self.appendConsole("\nBase de données mise à jour...")
+            self.appendConsole("\nBase de données mise à jour !\n")
             self.initTabs()
 
 
@@ -245,6 +246,8 @@ class Interface(Frame):
         modsTab.initTab()
         versTab = VersionsTab(self)
         versTab.initTab()
+        search = SearchTab(self)
+        search.initTab()
 """
 
     ######################################
