@@ -17,7 +17,7 @@ import time
 from VersionsTab import *
 from ModsTab import *
 from SearchTab import *
-
+from UpdatesTab import *
 
 class Interface(Frame):
     
@@ -242,6 +242,8 @@ class Interface(Frame):
         self.notebook.tab(3, state="normal")
         self.notebook.tab(5, state="normal")
         
+        updatesTab = UpdatesTab(self)
+        updatesTab.initTab()
         modsTab = ModsTab(self)
         modsTab.initTab()
         versTab = VersionsTab(self)
