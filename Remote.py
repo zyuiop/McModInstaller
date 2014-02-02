@@ -79,7 +79,6 @@ class Remote:
 	def getPackageUpdates(self, package):
 		url = package.get("pkgurl")
 		version = package.get("version")
-
 		if url == None or version == None:
 			return (False, "Paquet invalide.")
 		ok, rep = self.downloadPkgInfo(package["pkgurl"])

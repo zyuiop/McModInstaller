@@ -76,6 +76,7 @@ class DownloadManager:
                 if not d['name'] in self.dependencies:
                     self.dependencies.append(d['name'])
                     rep, dpkg = self.parent.remote.downloadPkgInfo(d['pkgurl'])
+                    dpkg["pkgurl"] = d["pkgurl"]
                     if rep:
                         self.download(dpkg, False)
                     else:

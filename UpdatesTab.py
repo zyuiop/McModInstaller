@@ -35,6 +35,7 @@ class UpdatesTab(DownloadManager):
             if not ok:
                 self.appendConsole("Erreur lors de la vérification de " + pkg['name'] + ': ' + rep)
             elif rep != None:
+                rep["pkgurl"] = pkg["pkgurl"]
                 toupdate.append(rep)
         return toupdate
 
