@@ -121,11 +121,52 @@ while Exec:
 		Exec = False
 	
 	elif choix == 3:
-		depot.updateMods()
+		print("Recherche des mises à jour...")
+		pkgs = localDB.getAllPackages()
+		toupdate = []
+	
+		# Vérif des updates
+		for reponame, package in pkgs.items():
+			print("> Vérification des mises à jour de "+package["name"])
+			ok, rep = depot.getPackageUpdates(package)
+			if ok == False:
+				print(">> Impossible de vérifier la version du paquet (Erreur réseau : "+rep+")")
+			else:
+				if rep == None:
+					print(">> Non mise à jour")
+				else:
+					rep["pkgurl"] = package["pkgurl"]
+					toupdate.append(rep)
+					print(">> Mise à jour disponible.")
+					
+			
+		if len(toupdate) == 0:
+			print("AUCUNE MISE A JOUR DISPONIBLE.")
+		else:
+			print("Il y a "+str(len(toupdate))+" mise(s) à jour à installer.")
+			if caller == None:
+				if noconfirm or UserInteract.UserInteract().yesNoQuestion("Voulez vous les installer ?"):
+					print("")
+					print("Début de la mise à jour...")
+
+					for package in toupdate:
+						print("> Mise à jour de "+package["name"])
+						print("")
+						if not installMod(package, noconfirm):
+							print("> Erreur de mise à jour.")
+						else:
+							print("> Mise à jour du mod effectuée.")
+						print("")
 	elif choix == 5:
 		print("> Recherche de mods :")
 		recherche = input("Saisissez votre recherche : ")
-		depot.search(recherche)
+		results = depot.search(recherche)
+		print("#====[AFFICHAGE DES RESULTATS]====#")
+		print("# Recherche : "+recherche)
+		print("Nom du paquet : Nom du Mod (Version minecraft)")
+		for res in results:
+			print(res["version"]+"__"+res["pkname"]+" : "+res["name"]+" ("+res["version"]+")")
+
 		print("> Nom du paquet à installer : (n pour ne rien installer)")
 		package = input("> ")
 		package = package.split("__")
@@ -209,11 +250,14 @@ while Exec:
 					if char == "" or char.lower() == "o":
 						print("Le mod va être désinstallé. Patientez s'il vous plait...")
 						try:
-							os.remove(home+"/mods/"+mod["mcver"]+"/"+mod["installname"])
+							if mod["modtype"] == "coremod":
+								os.remove(home+"/coremods/"+mod["mcver"]+"/"+mod["installname"])
+							else:
+								os.remove(home+"/mods/"+mod["mcver"]+"/"+mod["installname"])
 						except OSError:
 							print("[ERREUR] Le fichier est un dossier")
 						except:
-							print("[ERREUR] Impossible de désinstaller le mod")
+							print("[ERREUR] Fichier non trouvé.")
 						else:
 							print("Le mod a été supprimé")
 							localDB.deletePackage(mod["key"])
