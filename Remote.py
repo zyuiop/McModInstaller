@@ -87,5 +87,5 @@ class Remote:
 			return (False, "Erreur de récupération du paquet : "+rep)
 
 		if rep["version"] > package["version"]:
-			return (True, True)
-		return (True, False)
+			return (True, rep) # Rep = paquet
+		return (True, None)
