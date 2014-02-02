@@ -2,7 +2,7 @@ import os
 import shutil
 import Remote
 from tkinter import *
-
+from distutils.dir_util import *
 # C'est une classe abstraite, tu l'utilises directement et tu vas voir à la sortie.
 class DownloadManager:
     def __init__(self, parent):
