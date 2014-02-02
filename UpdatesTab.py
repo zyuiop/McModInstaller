@@ -1,17 +1,18 @@
 from DownloadManager import *
 import tkinter
+import tkinter.ttk
 
 class UpdatesTab(DownloadManager):
     def initTab(self):
         Button(self.parent.tabs[3], text="Rechercher des mises à jours", command=self.showUpdates).grid(row=0,column=0)
-        self.installUpdatesBtn = Button(self.tabs[3], text="Installer les mises à jour",command=self.installUpdates,state=DISABLED)
+        self.installUpdatesBtn = Button(self.parent.tabs[3], text="Installer les mises à jour",command=self.installUpdates,state=DISABLED)
         self.installUpdatesBtn.grid(row=0,column=1)
         self.appendConsole("Recherchez des mises à jour puis cliquez sur \"Installer les mises à jour\" pour lancer l'installation.")
     
     def showUpdates(self):
         self.appendConsole("Chargement de la liste de mods ...")
         self.installUpdatesBtn.config(state=NORMAL)
-        liste = tkinter.tkk.Treeview(self.tabs[3], selectmode="browse")
+        liste = tkinter.ttk.Treeview(self.parent.tabs[3], selectmode="browse")
         liste['columns'] = ('mcversion', 'newversion')
         liste.heading('mcversion', text='Version Minecraft')
         liste.heading('newversion', text='Version Mod')
@@ -26,7 +27,7 @@ class UpdatesTab(DownloadManager):
     
     def ModsToUpdate(self):
         self.appendConsole("Recherche des mises à jour ...")
-        pkgs = self.localDB.getAllPackages()
+        pkgs = self.parent.localDB.getAllPackages()
         toupdate = []
 
         for reponame, pkg in pkgs.items():
