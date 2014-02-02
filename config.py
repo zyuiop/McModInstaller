@@ -1,5 +1,8 @@
-version = "Exp1"
-guiversion = "0.1 - Pre-Alpha"
+# Program by Gnomino & zyuiop
+# Released 02/2014
+
+version = "1.0"
+guiversion = "1.0"
 from sys import platform as _platform
 if _platform == "linux" or _platform == "linux2":
     mcpath = "/.minecraft"

@@ -10,7 +10,8 @@ class SearchTab(DownloadManager):
         self.searchLine = StringVar()
         Entry(self.parent.tabs[5],textvariable=self.searchLine, width=30).grid(row=0, column=1)
 
-        Button(self.parent.tabs[5],text="Lancer la recherche",command=self.research).grid(row=0,column=2)
+        self.sButton = Button(self.parent.tabs[5],text="Lancer la recherche",command=self.research)
+        self.sButton.grid(row=0,column=2)
 
     def research(self):
         # Vérifions le contenu du label #
@@ -26,8 +27,12 @@ class SearchTab(DownloadManager):
         self.searchResults["columns"] = ("version")
         self.searchResults.heading("#0", text='Nom du mod')
         self.searchResults.heading("version", text='Version minecraft')
-        Button(self.parent.tabs[5], text="Voir le mod", command=self.showSearchResult).grid(column=1, row=2)
-        Button(self.parent.tabs[5], text="Installer le mod", command=self.installSearchResult).grid(column=1, row=3)
+        
+        self.voirBtn = Button(self.parent.tabs[5], text="Voir le mod", command=self.showSearchResult)
+        self.voirBtn.grid(column=1, row=2)
+        
+        self.instBtn = Button(self.parent.tabs[5], text="Installer le mod", command=self.installSearchResult)
+        self.instBtn.grid(column=1, row=3)
 
         results = self.parent.remote.search(keyword)
         self.searchResultsList = []
@@ -35,6 +40,14 @@ class SearchTab(DownloadManager):
             self.searchResults.insert("", "end", text=res["name"], values=(res["version"]))
             self.searchResultsList.append(res)
 
+    def enbBtn(self, state):
+        if state:
+            state = NORMAL
+        else:
+            state = DISABLED
+        self.instBtn.config(state=state)
+        self.voirBtn.config(state=state)
+        self.sButton.config(state=state)
 
     def showSearchResult(self):
         package = self.getSearchItemInfo()
@@ -79,9 +92,9 @@ class SearchTab(DownloadManager):
         if not tkMessageBox.askyesno("Installer le mod ?", "Voulez vous installer le mod "+package["name"] +" ?"):
             self.appendConsole("L'installation a été avortée.")
             return False
-
+        self.enbBtn(False)
         self.appendConsole("\nDébut de l'installation du mod...", False)
 
         res = self.download(package)
-
+        self.enbBtn(True)
         self.parent.refreshModContent()

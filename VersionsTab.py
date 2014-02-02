@@ -19,8 +19,10 @@ class VersionsTab(DownloadManager):
             self.versions.insert('', 'end', text=c["name"])
         self.versions.grid(row=0,column=0)
 
-        Button(self.parent.tabs[1],text="Plus d'infos",command=self.showInfo).grid(row=1,column=0)
-        Button(self.parent.tabs[1],text="Installer",command=self.install).grid(row=2,column=0)
+        self.infosBtn = Button(self.parent.tabs[1],text="Plus d'infos",command=self.showInfo)
+        self.infosBtn.grid(row=1,column=0)
+        self.installBtn = Button(self.parent.tabs[1],text="Installer",command=self.install)
+        self.installBtn.grid(row=2,column=0)
 
 
     def showInfo(self):
@@ -37,6 +39,7 @@ class VersionsTab(DownloadManager):
         self.appendConsole("NOM DU PAQUET : "+package["key"], False)
 
     def getClientInfo(self):
+        
         sel = self.versions.selection()
         if len(sel) == 0:
             tkMessageBox.showwarning("Aucune sélection","Vous n'avez sélectionné aucune version à afficher.")
@@ -64,5 +67,8 @@ class VersionsTab(DownloadManager):
             return False
 
         self.appendConsole("\nDébut de l'installation du client.", False)
-
+        self.installBtn.config(state=DISABLED)
+        self.infosBtn.config(state=DISABLED)
         self.download(package)
+        self.installBtn.config(state=NORMAL)
+        self.infosBtn.config(state=NORMAL)
