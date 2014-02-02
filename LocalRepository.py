@@ -80,7 +80,7 @@ class LocalRepository:
 		with open(self.localRepoFileName, "w") as fichier:
 			try:
 				db = {"mods":db}
-				fichier.write(json.dumps(db))
+				fichier.write(json.dumps(db, indent=4))
 				return True
 			except:
 				return False

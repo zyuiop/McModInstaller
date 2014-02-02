@@ -42,10 +42,12 @@ class UpdatesTab(DownloadManager):
 
     def installUpdates(self):
         toupdate = self.showUpdates()
+        self.installUpdatesBtn.config(state=DISABLED)
         self.appendConsole("Mise à jour ...")
         for pkg in toupdate:
             self.appendConsole("\n-> Mise à jour de " + pkg['name'] + "en version " + pkg['version'])
             self.download(pkg)
+        self.installUpdatesBtn.config(state=NORMAL)
         
                 
 
