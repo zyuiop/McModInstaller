@@ -3,7 +3,7 @@ from config import *
 from os.path import expanduser
 from LocalRepository import *
 from Settings import *
-from Remote import *
+import Remote as rem
 import functions
 import json
 import math
@@ -17,13 +17,12 @@ from tkinter import *
 home = expanduser("~")+mcpath
 settingsManager = Settings(home)
 localDB = LocalRepository(home)
-UI = UserInteract.UserInteract()
-UI.setLocalDB(localDB)
+
 
 
 # ANALYSE DES ARGUMENTS
 args = sys.argv[1:]
-if len(args) == 0 or args[0] not in ("-c","--cli"):
+if len(args) == 0 or args[0] != "--cli":
 
 	# On vérifie les arguments. S'il y en a, on appelle l'analyseur d'arguments
 	if len(args) > 0:
@@ -59,9 +58,12 @@ repoDirectory = settingsManager.getNode("directory")
 # 2. Si non configuré, on demande à l'utilisateur de configurer
 if repo == False:
 	print("Aucun dépôt n'a été renseigné.")
+	UI = UserInteract.UserInteract()
+	UI.setLocalDB(localDB)
 	repo, repoDirectory = UI.inputDepot()
 	settingsManager.addNode("repository",repo)
 	settingsManager.addNode("directory",repoDirectory)
+	UI.destroy()
 
 if repoDirectory == False:
 	repoDirectory = "/"
@@ -70,8 +72,9 @@ if repoDirectory == False:
 # 3. Initialisation de la classe dépot avec les paramètres
 oldrepo = repo
 while True:
-	depot = Remote(oldrepo, repoDirectory, home, localDB)
-
+	depot = rem.Remote(oldrepo, repoDirectory, home, localDB)
+	UI = UserInteract.UserInteract(depot, True)
+	UI.setLocalDB(localDB)
 	# 4. Récupération de la liste des oaqyets
 	print("Mise à jour de la base de donnée de paquets depuis 'http://"+oldrepo+repoDirectory+"'... Ceci peut prendre quelques instants")
 	success, repo = depot.updateList()
@@ -252,7 +255,7 @@ while Exec:
 				char = input("[O/n] ")
 				if char == "" or char.lower() == "o":
 					print("Le client va être installé. Patientez s'il vous plait...")
-					depot.installClient(package)
+					UI.installClient(package)
 				else:
 					print("Le client ne sera pas installé. Retour au menu")
 	elif choix == 2:

@@ -5,18 +5,22 @@ from tkinter import *
 from distutils.dir_util import *
 # C'est une classe abstraite, tu l'utilises directement et tu vas voir à la sortie.
 class DownloadManager:
-    def __init__(self, parent):
+    def __init__(self, parent=None, cli=False):
         self.parent = parent
         self.dependencies = []
+        self.cli = cli
     
     def appendConsole(self, text, delete=False):
-        self.parent.logs.config(state=NORMAL)
-        # À utiliser avec modération
-        if delete:
-            self.parent.logs.delete("1.0",END)
-        self.parent.logs.insert(END, text + "\n")
-        self.parent.logs.config(state=DISABLED)
-        self.parent.logs.yview(END)
+        if not self.cli:
+            self.parent.logs.config(state=NORMAL)
+            # À utiliser avec modération
+            if delete:
+                self.parent.logs.delete("1.0",END)
+            self.parent.logs.insert(END, text + "\n")
+            self.parent.logs.config(state=DISABLED)
+            self.parent.logs.yview(END)
+        else:
+            print(text)
     
     def download(self, pkg, is_first=True):
         # !!! LOCAL DB NON SUPPORTEE !!!

@@ -1,7 +1,12 @@
 import math
 from config import *
+from DownloadManager import *
 
-class UserInteract:
+class UserInteract(DownloadManager):
+	def __init__(self, remote, cli):
+		self.remote = remote
+		DownloadManager.__init__(self,self, cli)
+
 	def setLocalDB(self, localDB):
 		self.localDB = localDB
 
@@ -32,11 +37,7 @@ class UserInteract:
 		return 0
 
 	def showModStatusText(self, text, caller = None, origin = None):
-		if caller == None:
-			print(text)
-		else:
-			caller.appendConsole(text)
-		return
+		print(text)
 
 	def inputDepot(self):
 		if not self.yesNoQuestion("Voulez vous utiliser le dépôt par défaut ? (Non = dépôt personnalisé) "):
@@ -110,4 +111,10 @@ class UserInteract:
 			if noconfirm or self.yesNoQuestion("== Voulez vous installer ce mod ? =="):
 				
 				print("Le mod va être installé. Patientez s'il vous plait...")
-				self.remote.installMod(package,noconfirm)
+				self.installMod(package)
+
+	def installClient(self, pkg):
+		self.download(pkg)
+
+	def installMod(self,pkg):
+		self.download(pkg)
