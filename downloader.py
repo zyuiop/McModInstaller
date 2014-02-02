@@ -33,14 +33,14 @@ class Downloader:
 			file_size_dl = total
 		self.size = total
 		self.dl_size = file_size_dl
-		bars = math.floor((file_size_dl * 100 / total))
+		bars = math.floor((file_size_dl * 100 / total)/2)
 		pr = self.gui_parent
 		string = self.label.format(self.humanSize(file_size_dl), self.humanSize(total))
 		if pr != None:
 			pr.setProgressValue(file_size_dl, total)
 			pr.setStateText(string)
 		else:
-			string += " : [" + "#"*bars + " "*(100-bars) + "] "+str(math.floor(file_size_dl * 100. / total))+"%       "
+			string += " : [" + "#"*bars + " "*(50-bars) + "] "+str(math.floor(file_size_dl * 100. / total))+"%       "
 			string = string + chr(8)*(len(string))
 			print(string, flush=True, end='')
 

@@ -31,9 +31,10 @@ class UpdatesTab(DownloadManager):
         toupdate = []
 
         for reponame, pkg in pkgs.items():
+            self.appendConsole("-> Vérification des mises à jour de "+str(pkg.get("name")))
             ok, rep = self.parent.remote.getPackageUpdates(pkg)
             if not ok:
-                self.appendConsole("Erreur lors de la vérification de " + pkg['name'] + ': ' + rep)
+                self.appendConsole("(!) Erreur lors de la vérification de " + str(pkg.get("name")) + ': ' + rep)
             elif rep != None:
                 rep["pkgurl"] = pkg["pkgurl"]
                 toupdate.append(rep)
@@ -43,7 +44,7 @@ class UpdatesTab(DownloadManager):
         toupdate = self.showUpdates()
         self.appendConsole("Mise à jour ...")
         for pkg in toupdate:
-            self.appendConsole("Mise à jour de " + pkg['name'] + "en version " + pkg['version'])
+            self.appendConsole("\n-> Mise à jour de " + pkg['name'] + "en version " + pkg['version'])
             self.download(pkg)
         
                 
