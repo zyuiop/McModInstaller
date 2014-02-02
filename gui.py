@@ -29,9 +29,9 @@ class Interface(Frame):
         #
         # Récupération des variables à la con
         #
-        self.home = expanduser("~")+mcpath
-        self.settings = Settings(self.home)
-        self.localDB = LocalRepository(self.home)
+        self.mcpath= expanduser("~")+mcpath
+        self.settings = Settings(self.mcpath)
+        self.localDB = LocalRepository(self.mcpath)
         self.UI = UserInteract.UserInteract()
         self.UI.setLocalDB(self.localDB)
 
@@ -160,8 +160,14 @@ class Interface(Frame):
         mod = self.installedModsList[index]
         self.installedModsList.pop(index)
         
+        path = self.mcpath + "/"
+        if mod["modtype"] == "coremod":
+            path += "coremods"
+        else:
+            path += "mods"
+        path += "/" + mod["mcver"] + "/" + mod['installname']
         try:
-            os.remove(self.home+"/mods/"+mod["mcver"]+"/"+mod["installname"])
+            os.remove(path)
         except:
             tkMessageBox.showerror("Erreur de suppression", "Une erreur s'est produite durant la suppression du fichier "+mod["installname"])
         else:
@@ -219,7 +225,7 @@ class Interface(Frame):
         self.updateRepoConfig(serveur, dossier)
 
         # On se connecte au repository :
-        self.remote = rem.Remote(serveur, dossier, self.home, self.localDB, True, gui_parent = self)
+        self.remote = rem.Remote(serveur, dossier, self.mcpath, self.localDB, True, gui_parent = self)
         self.appendConsole("\nMise à jour de la base de données...")
 
         rep, self.repContent = self.remote.updateList()

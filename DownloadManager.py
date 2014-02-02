@@ -58,9 +58,10 @@ class DownloadManager:
                 path += "coremods"
             else:
                 path += "mods"
+            path += "/" + pkg['mc_version']
             if not os.path.isdir(path):
                 mkpath(path)
-            path += "/" + pkg['package_name'] + ".jar"
+            path += '/' + pkg['package_name'] + ".jar"
             i = 0
             worked = False
             while not worked and i < len(pkg['mirrors']):
