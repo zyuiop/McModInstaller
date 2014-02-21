@@ -3,6 +3,7 @@ import shutil
 import Remote
 from tkinter import *
 from distutils.dir_util import *
+import json
 # C'est une classe abstraite, tu l'utilises directement et tu vas voir à la sortie.
 class DownloadManager:
     def __init__(self, parent=None, cli=False):
@@ -36,19 +37,42 @@ class DownloadManager:
                     else:
                         self.appendConsole("/!\\ Le dossier " + profilepath + " existe.")
                     if "jarfile" in pkg.keys():
-                        self.appendConsole("[1/2] Téléchargement du minecraft.jar")
+                        self.appendConsole("[1/3] Téléchargement du minecraft.jar")
                         if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['jarfile'], profilepath + "/" + pkg['profilename'] + '.jar', "Téléchargé : {} / {}", "Téléchargement du minecraft.jar"):
                             self.appendConsole("--> Échec lors du téléchargement")
                     else:
-                        self.appendConsole("[1/2] Copie du minecraft.jar")
+                        self.appendConsole("[1/3] Copie du minecraft.jar")
                         shutil.copy(vanilladir + "/" + pkg['version'] + ".jar", profilepath + "/" + pkg['profilename'] + ".jar")
                         self.appendConsole("--> Copie terminée") # Comme notre relation, salaud !
-                    self.appendConsole("[2/2] Téléchargement du profil")
-                    if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json", "Téléchargé : {} / {}", "Récupération du profil"):                        
-                        self.appendConsole("--> Échec lors du téléchargement du profil")
-                    else:
-                        self.appendConsole("--> Téléchargement terminé. Le client a bien été installé.")
-                        
+                        self.appendConsole("[2/3] Téléchargement du profil")
+                        if not self.parent.remote.downloadFile('http://' + self.parent.remote.repo + self.parent.remote.directory + pkg['json'], profilepath + "/" + pkg['profilename'] + ".json", "Téléchargé : {} / {}", "Récupération du profil"):                        
+                            self.appendConsole("--> Échec lors du téléchargement du profil")
+                        else:
+                            self.appendConsole("[3/3] Ajout au fichier de profils")
+                            try:
+                                with open(self.parent.remote.mcpath+"/launcher_profiles.json", "r") as fichier:
+                                    try:
+                                        jsonfile = fichier.read()
+                                    except:
+                                        self.appendConsole("--> Une erreur s'est produite.")
+                                        return False
+                            except FileNotFoundError:
+                                self.appendConsole("--> Erreur : Lecture du fichier de profils impossibles. Minecraft est il correctement installé ?")
+                                return False
+
+                            tab = json.loads(jsonfile)
+                            new_profile = {"name":pkg["name"],"lastVersionId":pkg["profilename"]}
+                            tab["profiles"][pkg["name"]] = new_profile
+
+                            with open(self.parent.remote.mcpath+"/launcher_profiles.json", "w") as fichier:
+                                try:
+                                    fichier.write(json.dumps(tab))
+                                    self.appendConsole("[3/3] Terminé !")
+                                    self.appendConsole("Le profil a bien été installé ! ")
+                                    return True
+                                except:
+                                    self.appendConsole("Erreur lors de l'écriture du fichier de profils")
+                                    return False
             else:
                 self.appendConsole("La version " + pkg['version'] + " de Minecraft n'est pas installée.")        
         else:
